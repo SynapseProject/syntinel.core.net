@@ -1,0 +1,29 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syntinel.Core", "Syntinel.Core\Syntinel.Core.csproj", "{F0BDDC8D-AA51-4006-9320-AA7BC9E5136E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syntinel.Aws", "Syntinel.Aws\Syntinel.Aws.csproj", "{CC24AD6E-DE9E-4358-8E07-2EBC13AB3960}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Syntinel.Tester", "Syntinel.Tester\Syntinel.Tester.csproj", "{3E7FAD03-BDE8-4B4F-AD65-699AC60C2B88}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F0BDDC8D-AA51-4006-9320-AA7BC9E5136E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0BDDC8D-AA51-4006-9320-AA7BC9E5136E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0BDDC8D-AA51-4006-9320-AA7BC9E5136E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0BDDC8D-AA51-4006-9320-AA7BC9E5136E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC24AD6E-DE9E-4358-8E07-2EBC13AB3960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC24AD6E-DE9E-4358-8E07-2EBC13AB3960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC24AD6E-DE9E-4358-8E07-2EBC13AB3960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC24AD6E-DE9E-4358-8E07-2EBC13AB3960}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E7FAD03-BDE8-4B4F-AD65-699AC60C2B88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E7FAD03-BDE8-4B4F-AD65-699AC60C2B88}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E7FAD03-BDE8-4B4F-AD65-699AC60C2B88}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E7FAD03-BDE8-4B4F-AD65-699AC60C2B88}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
