@@ -9,5 +9,9 @@
     <Folder Include="Classes\Requests\" />
     <Folder Include="Classes\Replies\" />
     <Folder Include="Classes\Enums\" />
+    <Folder Include="Classes\Database\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
   </ItemGroup>
 </Project>
