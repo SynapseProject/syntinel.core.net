@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -10,10 +9,13 @@ namespace Syntinel.Core
     {
         [JsonProperty(PropertyName = "_id")]
         public string Id { get; set; }
+
         [JsonProperty(PropertyName = "_isActive")]
         public bool IsActive { get; set; }
+
         [JsonProperty(PropertyName = "_status")]
         public string Status { get; set; }
+
         [JsonProperty(PropertyName = "_time")]
         public DateTime Time { get; set; }
 
@@ -28,12 +30,16 @@ namespace Syntinel.Core
     {
         [JsonProperty(PropertyName = "_isValid")]
         public bool IsValid { get; set; }
+
         [JsonProperty(PropertyName = "_status")]
         public StatusType Status { get; set; }
+
         [JsonProperty(PropertyName = "_time")]
         public DateTime Time { get; set; }
+
         [JsonProperty(PropertyName = "cue")]
         public string Cue { get; set; }
+
         [JsonProperty(PropertyName = "variables")]
         public VariableDbType[] Variables { get; set; }
 
@@ -43,7 +49,9 @@ namespace Syntinel.Core
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
+
         [JsonProperty(PropertyName = "values")]
         public string[] Values { get; set; }
     }
+
 }

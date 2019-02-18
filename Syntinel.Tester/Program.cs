@@ -2,6 +2,9 @@
 using System.IO;
 
 using Syntinel.Core;
+using Syntinel.Aws;
+
+using Amazon;
 
 //using Amazon.Lambda.Serialization.Json;
 using Newtonsoft.Json;
@@ -13,13 +16,43 @@ namespace Syntinel.Tester
     {
         static void Main(string[] args)
         {
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Desktop/ReporterDbRecord.json", FileMode.Open));
+            DynamoDbEngine db = new DynamoDbEngine(RegionEndpoint.USEast1);
+            Processor processor = new Processor(db);
+            ILogger logger = new ConsoleLogger();
+
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
             string objectStr = reader.ReadToEnd();
+            Signal signal = JsonConvert.DeserializeObject<Signal>(objectStr);
 
-            ReporterDbRecord record = JsonConvert.DeserializeObject<ReporterDbRecord>(objectStr);
-            string outStr = JsonConvert.SerializeObject(record);
+            processor.ProcessSignal(signal, logger);
+        }
+    }
 
-            Console.WriteLine(outStr);
+    public class ConsoleLogger : ILogger
+    {
+        public void Log(string message)
+        {
+            Console.WriteLine(message);
+        }
+
+        public void Debug(string message)
+        {
+            Console.WriteLine("DEBUG - " + message);
+        }
+
+        public void Error(string message)
+        {
+            Console.WriteLine("ERROR - " + message);
+        }
+
+        public void Info(string message)
+        {
+            Console.WriteLine("INFO  - " + message);
+        }
+
+        public void Warn(string message)
+        {
+            Console.WriteLine("WARN  - " + message);
         }
     }
 }

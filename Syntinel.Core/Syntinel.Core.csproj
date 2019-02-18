@@ -10,6 +10,8 @@
     <Folder Include="Objects\Replies\" />
     <Folder Include="Objects\Enums\" />
     <Folder Include="Objects\Database\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Utilities\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
