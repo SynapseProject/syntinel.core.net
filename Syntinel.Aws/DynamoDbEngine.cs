@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Reflection;
 using Syntinel.Core;
 
 using Amazon;
@@ -38,6 +39,12 @@ namespace Syntinel.Aws
             return tableName;
         }
 
+        private Document ConvertToDocument(object obj)
+        {
+            Document doc = Document.FromJson(JsonTools.Serialize(obj));
+            return doc;
+        }
+
         public T Get<T>(string id)
         {
             T dbRecord = default(T);
@@ -52,6 +59,64 @@ namespace Syntinel.Aws
                 dbRecord = JsonTools.Deserialize<T>(doc.ToJson());
 
             return dbRecord;
+        }
+
+        public T Create<T>(T record, bool failIfExists = false)
+        {
+            string tableName = GetTableName(typeof(T));
+            Table table = Table.LoadTable(client, tableName);
+
+            PutItemOperationConfig config = new PutItemOperationConfig();
+
+            if (failIfExists)
+            {
+                config.ConditionalExpression = new Expression();
+                foreach (string hash in table.HashKeys)
+                {
+                    config.ConditionalExpression.ExpressionAttributeNames.Add("#" + hash, hash);
+                    string statement = "(attribute_not_exists(#" + hash + "))";
+
+                    if (String.IsNullOrWhiteSpace(config.ConditionalExpression.ExpressionStatement))
+                        config.ConditionalExpression.ExpressionStatement = statement;
+                    else
+                        config.ConditionalExpression.ExpressionStatement = " and " + statement;
+                }
+            }
+
+            Document doc = ConvertToDocument(record);
+            Task<Document> task = table.PutItemAsync(doc, config);
+            task.Wait(defaultTimeout);
+
+            return record;
+        }
+
+        public T Update<T>(T record, bool failIfMissing = false)
+        {
+            string tableName = GetTableName(typeof(T));
+            Table table = Table.LoadTable(client, tableName);
+
+            PutItemOperationConfig config = new PutItemOperationConfig();
+
+            if (failIfMissing)
+            {
+                config.ConditionalExpression = new Expression();
+                foreach (string hash in table.HashKeys)
+                {
+                    config.ConditionalExpression.ExpressionAttributeNames.Add("#" + hash, hash);
+                    string statement = "(attribute_exists(#" + hash + "))";
+
+                    if (String.IsNullOrWhiteSpace(config.ConditionalExpression.ExpressionStatement))
+                        config.ConditionalExpression.ExpressionStatement = statement;
+                    else
+                        config.ConditionalExpression.ExpressionStatement = " and " + statement;
+                }
+            }
+
+            Document doc = ConvertToDocument(record);
+            Task<Document> task = table.PutItemAsync(doc, config);
+            task.Wait(defaultTimeout);
+
+            return record;
         }
     }
 }

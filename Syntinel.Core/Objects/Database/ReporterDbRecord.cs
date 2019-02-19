@@ -31,7 +31,5 @@ namespace Syntinel.Core
         public string Target { get; set; }
         [JsonProperty(PropertyName = "config")]
         public Dictionary<object,object> Config { get; set; }
-
-
     }
 }

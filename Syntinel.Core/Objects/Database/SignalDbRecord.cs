@@ -10,19 +10,19 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "_id")]
         public string Id { get; set; }
 
-        [JsonProperty(PropertyName = "_isActive")]
-        public bool IsActive { get; set; }
+        [JsonProperty(PropertyName = "_isActive", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsActive { get; set; }
 
-        [JsonProperty(PropertyName = "_status")]
+        [JsonProperty(PropertyName = "_status", NullValueHandling = NullValueHandling.Ignore)]
         public string Status { get; set; }
 
-        [JsonProperty(PropertyName = "_time")]
-        public DateTime Time { get; set; }
+        [JsonProperty(PropertyName = "_time", NullValueHandling = NullValueHandling.Ignore)]
+        public DateTime? Time { get; set; }
 
-        [JsonProperty(PropertyName = "signal")]
+        [JsonProperty(PropertyName = "signal", NullValueHandling = NullValueHandling.Ignore)]
         public Signal Signal { get; set; }
 
-        [JsonProperty(PropertyName = "actions")]
+        [JsonProperty(PropertyName = "actions", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, ActionDbType> Actions { get; set; }
     }
 
