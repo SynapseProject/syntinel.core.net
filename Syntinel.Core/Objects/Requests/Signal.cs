@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
@@ -68,10 +69,11 @@ namespace Syntinel.Core
         public string Description { get; set; }
 
         [JsonProperty(PropertyName = "type")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public VariableType Type { get; set; }
 
         [JsonProperty(PropertyName = "values")]
-        public KeyValuePair<string, string>[] Values { get; set; }
+        public Dictionary<string, string> Values { get; set; }
 
         [JsonProperty(PropertyName = "defaultValue")]
         public string DefaultValue { get; set; }

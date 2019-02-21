@@ -11,13 +11,15 @@ namespace Syntinel.Aws
 {
     public class LambdaFunctions
     {
-        DynamoDbEngine db;
-        Processor processor;
+        public IDatabaseEngine db;
+        public ILogger logger;
+        public LambdaProcessor processor;
 
         public LambdaFunctions()
         {
             db = new DynamoDbEngine();
-            processor = new Processor(db);
+            logger = new LambdaLogger();
+            processor = new LambdaProcessor(db, logger);
         }
 
         public string Hello(string input, ILambdaLogger log)
@@ -27,8 +29,9 @@ namespace Syntinel.Aws
 
         public SignalReply ProcessSignal(Signal signal, ILambdaLogger log)
         {
-            Logger logger = new Logger(log);
-            return processor.ProcessSignal(signal, logger);
+            processor.Logger = new LambdaLogger(log);
+            return processor.ProcessSignal(signal);
         }
     }
+
 }

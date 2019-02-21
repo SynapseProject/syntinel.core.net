@@ -3,31 +3,38 @@ using System.Threading;
 
 namespace Syntinel.Core
 {
-    public class Processor
+    public abstract class Processor
     {
         readonly IDatabaseEngine DbEngine;
+        public ILogger Logger;
 
-        public Processor(IDatabaseEngine engine)
+        protected Processor(IDatabaseEngine engine, ILogger logger = null)
         {
             DbEngine = engine;
+            Logger = logger;
         }
 
-        public SignalReply ProcessSignal(Signal signal, ILogger logger)
+        public SignalReply ProcessSignal(Signal signal)
         {
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "000000000");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
-
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
             signalDb.Status = StatusType.New.ToString();
             signalDb.Time = DateTime.UtcNow;
             signalDb.Signal = signal;
             signalDb.IsActive = true;
-
             DbEngine.Update(signalDb);
+
+            foreach (ChannelDbType channel in reporter.Channels)
+            {
+                this.SendToChannel(channel, signalDb);
+            }
 
             return null;
         }
+
+        public abstract void SendToChannel(ChannelDbType channel, SignalDbRecord signal);
 
         private SignalDbRecord CreateSignalDbRecord()
         {
