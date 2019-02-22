@@ -17,25 +17,46 @@ namespace Syntinel.Aws
         {
         }
 
-        public override void SendToChannel(ChannelDbType channel, SignalDbRecord signal)
+        public override SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
         {
-            String lambdaName = $"syntinel-signal-publisher-{channel.Type}";
-            Logger.Info($"Sending Signal To {channel.Type} - {channel.Name} ({lambdaName})");
+            SignalStatus status = new SignalStatus
+            {
+                Channel = channel.Name,
+                Type = channel.Type,
+                Code = StatusCode.Success,
+                Message = "Success"
+            };
 
-            ChannelRequest request = new ChannelRequest();
-            request.Id = signal.Id;
-            request.Signal = signal.Signal;
-            request.Channel = channel;
+            try
+            {
+                String lambdaName = $"syntinel-signal-publisher-{channel.Type}";
+                Logger.Info($"Sending Signal To {channel.Type} - {channel.Name} ({lambdaName})");
 
-            CallMethod(lambdaName, JsonTools.Serialize(request));
+                ChannelRequest request = new ChannelRequest
+                {
+                    Id = signal.Id,
+                    Signal = signal.Signal,
+                    Channel = channel
+                };
+
+                InvokeResponse response = CallLambdaMethod(lambdaName, JsonTools.Serialize(request));
+            } catch (Exception e)
+            {
+                status.Code = StatusCode.Failure;
+                status.Message = e.Message;
+            }
+
+            return status;
         }
 
-        public string CallMethod(string functionName, string json)
+        public InvokeResponse CallLambdaMethod(string functionName, string json, bool waitForReply = false)
         {
+            string invocationType = waitForReply ? "RequestResponse" : "Event";
+
             InvokeRequest request = new InvokeRequest
             {
                 FunctionName = functionName,
-                InvocationType = "Event",
+                InvocationType = invocationType,
                 LogType = "Tail",
                 Payload = json
             };
@@ -44,24 +65,26 @@ namespace Syntinel.Aws
             t.Wait(30000);
             InvokeResponse response = t.Result;
 
+            return response;
+        }
+
+        public static string GetPayload(InvokeResponse response)
+        {
             MemoryStream ps = response.Payload;
             StreamReader reader = new StreamReader(ps);
             string payload = reader.ReadToEnd();
-
-            Console.WriteLine(">>> Calling Function : " + functionName);
-            Console.WriteLine(payload);
-            Console.WriteLine();
-            Console.WriteLine(">>> Status Code : " + response.StatusCode);
-
-            if (!String.IsNullOrWhiteSpace(response.LogResult))
-            {
-                string logs = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(response.LogResult));
-                Console.WriteLine(logs);
-            }
-            Console.WriteLine(response.FunctionError);
-
             return payload;
         }
 
+        public static string GetLogs(InvokeResponse response)
+        {
+            string logs = null;
+            if (!String.IsNullOrWhiteSpace(response.LogResult))
+            {
+                logs = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(response.LogResult));
+            }
+
+            return logs;
+        }
     }
 }

@@ -41,7 +41,7 @@ namespace Syntinel.Core
         public string Cue { get; set; }
 
         [JsonProperty(PropertyName = "variables")]
-        public VariableDbType[] Variables { get; set; }
+        public List<VariableDbType> Variables { get; set; } = new List<VariableDbType>();
 
     }
 
@@ -51,7 +51,7 @@ namespace Syntinel.Core
         public string Name { get; set; }
 
         [JsonProperty(PropertyName = "values")]
-        public string[] Values { get; set; }
+        public List<string> Values { get; set; }
     }
 
 }

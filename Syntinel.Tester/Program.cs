@@ -24,7 +24,8 @@ namespace Syntinel.Tester
             string objectStr = reader.ReadToEnd();
             Signal signal = JsonConvert.DeserializeObject<Signal>(objectStr);
 
-            processor.ProcessSignal(signal);
+            SignalReply reply = processor.ProcessSignal(signal);
+            Console.WriteLine(JsonTools.Serialize(reply));
         }
     }
 

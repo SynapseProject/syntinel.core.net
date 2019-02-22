@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
@@ -16,12 +18,13 @@ namespace Syntinel.Core
         public DateTime Time { get; set; }
 
         [JsonProperty(PropertyName = "results")]
-        public SignalStatus[] Results { get; set; }
+        public List<SignalStatus> Results { get; set; } = new List<SignalStatus>();
     }
 
     public class SignalStatus
     {
         [JsonProperty(PropertyName = "code")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public StatusCode Code { get; set; }
 
         [JsonProperty(PropertyName = "channel")]

@@ -42,10 +42,10 @@ namespace Syntinel.Core
         public Resolver Resolver { get; set; }
 
         [JsonProperty(PropertyName = "inputs")]
-        public SignalVariable[] Inputs { get; set; }
+        public List<SignalVariable> Inputs { get; set; } = new List<SignalVariable>();
 
         [JsonProperty(PropertyName = "actions")]
-        public SignalVariable[] Actions { get; set; }
+        public List<SignalVariable> Actions { get; set; } = new List<SignalVariable>();
 
         [JsonProperty(PropertyName = "defaultAction")]
         public string DefaultAction { get; set; }

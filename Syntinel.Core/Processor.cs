@@ -16,25 +16,45 @@ namespace Syntinel.Core
 
         public SignalReply ProcessSignal(Signal signal)
         {
+            SignalReply reply = new SignalReply();
+            reply.StatusCode = StatusCode.Success;
+            reply.Time = DateTime.UtcNow;
+            reply.StatusCode = StatusCode.Success;
+
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "000000000");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
+            reply.Id = signalDb.Id;
             signalDb.Status = StatusType.New.ToString();
             signalDb.Time = DateTime.UtcNow;
             signalDb.Signal = signal;
             signalDb.IsActive = true;
             DbEngine.Update(signalDb);
 
+            int channelCount = 0;
+            int errorCount = 0;
             foreach (ChannelDbType channel in reporter.Channels)
             {
-                this.SendToChannel(channel, signalDb);
+                channelCount++;
+                SignalStatus status = SendToChannel(channel, signalDb);
+                reply.Results.Add(status);
+                if (status.Code == StatusCode.Failure)
+                    errorCount++;
             }
 
-            return null;
+            if (errorCount > 0)
+            {
+                if (errorCount == channelCount)
+                    reply.StatusCode = StatusCode.Failure;
+                else
+                    reply.StatusCode = StatusCode.SuccessWithErrors;
+            }
+
+            return reply;
         }
 
-        public abstract void SendToChannel(ChannelDbType channel, SignalDbRecord signal);
+        public abstract SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal);
 
         private SignalDbRecord CreateSignalDbRecord()
         {
