@@ -10,8 +10,10 @@ namespace Syntinel.Core
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
+
         [JsonProperty(PropertyName = "signal")]
         public Signal Signal { get; set; }
+
         [JsonProperty(PropertyName = "channel")]
         public ChannelDbType Channel { get; set; }
     }
