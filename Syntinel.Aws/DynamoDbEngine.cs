@@ -118,5 +118,31 @@ namespace Syntinel.Aws
 
             return record;
         }
+
+        public void Delete<T>(string id, bool failIfMissing = false)
+        {
+            string tableName = GetTableName(typeof(T));
+            Table table = Table.LoadTable(client, tableName);
+
+            DeleteItemOperationConfig config = new DeleteItemOperationConfig();
+            if (failIfMissing)
+            {
+                config.ConditionalExpression = new Expression();
+                foreach (string hash in table.HashKeys)
+                {
+                    config.ConditionalExpression.ExpressionAttributeNames.Add("#" + hash, hash);
+                    string statement = "(attribute_exists(#" + hash + "))";
+
+                    if (String.IsNullOrWhiteSpace(config.ConditionalExpression.ExpressionStatement))
+                        config.ConditionalExpression.ExpressionStatement = statement;
+                    else
+                        config.ConditionalExpression.ExpressionStatement = " and " + statement;
+                }
+            }
+
+            Task<Document> task = table.DeleteItemAsync(id, config);
+            task.Wait(defaultTimeout);
+
+        }
     }
 }

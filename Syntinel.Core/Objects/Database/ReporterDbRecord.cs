@@ -19,7 +19,6 @@ namespace Syntinel.Core
         public string Description { get; set; }
 
         [JsonProperty(PropertyName = "channels")]
-        [JsonConverter(typeof(StringEnumConverter))]
         public ChannelDbType[] Channels { get; set; }
     }
 
