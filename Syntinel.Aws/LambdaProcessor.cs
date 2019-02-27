@@ -17,7 +17,7 @@ namespace Syntinel.Aws
         {
         }
 
-        public override SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
+        public override SignalStatus PublishSignal(ChannelDbType channel, SignalDbRecord signal)
         {
             SignalStatus status = new SignalStatus
             {
@@ -39,7 +39,7 @@ namespace Syntinel.Aws
                     Channel = channel
                 };
 
-                InvokeResponse response = CallLambdaMethod(lambdaName, JsonTools.Serialize(request));
+                InvokeResponse response = AWSUtilities.CallLambdaMethod(client, lambdaName, JsonTools.Serialize(request));
             } catch (Exception e)
             {
                 status.Code = StatusCode.Failure;
@@ -47,44 +47,6 @@ namespace Syntinel.Aws
             }
 
             return status;
-        }
-
-        public InvokeResponse CallLambdaMethod(string functionName, string json, bool waitForReply = false)
-        {
-            string invocationType = waitForReply ? "RequestResponse" : "Event";
-
-            InvokeRequest request = new InvokeRequest
-            {
-                FunctionName = functionName,
-                InvocationType = invocationType,
-                LogType = "Tail",
-                Payload = json
-            };
-
-            Task<InvokeResponse> t = client.InvokeAsync(request);
-            t.Wait(30000);
-            InvokeResponse response = t.Result;
-
-            return response;
-        }
-
-        public static string GetPayload(InvokeResponse response)
-        {
-            MemoryStream ps = response.Payload;
-            StreamReader reader = new StreamReader(ps);
-            string payload = reader.ReadToEnd();
-            return payload;
-        }
-
-        public static string GetLogs(InvokeResponse response)
-        {
-            string logs = null;
-            if (!String.IsNullOrWhiteSpace(response.LogResult))
-            {
-                logs = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(response.LogResult));
-            }
-
-            return logs;
         }
     }
 }

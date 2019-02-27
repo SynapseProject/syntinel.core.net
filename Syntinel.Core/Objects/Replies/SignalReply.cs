@@ -9,6 +9,7 @@ namespace Syntinel.Core
     public class SignalReply
     {
         [JsonProperty(PropertyName = "statusCode")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public StatusCode StatusCode { get; set; }
 
         [JsonProperty(PropertyName = "id")]

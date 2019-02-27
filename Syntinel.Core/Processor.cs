@@ -3,12 +3,12 @@ using System.Threading;
 
 namespace Syntinel.Core
 {
-    public abstract class Processor
+    public class Processor
     {
         readonly IDatabaseEngine DbEngine;
         public ILogger Logger;
 
-        protected Processor(IDatabaseEngine engine, ILogger logger = null)
+        public Processor(IDatabaseEngine engine, ILogger logger = null)
         {
             DbEngine = engine;
             Logger = logger;
@@ -37,7 +37,7 @@ namespace Syntinel.Core
             foreach (ChannelDbType channel in reporter.Channels)
             {
                 channelCount++;
-                SignalStatus status = SendToChannel(channel, signalDb);
+                SignalStatus status = PublishSignal(channel, signalDb);
                 reply.Results.Add(status);
                 if (status.Code == StatusCode.Failure)
                     errorCount++;
@@ -54,7 +54,30 @@ namespace Syntinel.Core
             return reply;
         }
 
-        public abstract SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal);
+        public virtual SignalStatus PublishSignal(ChannelDbType channel, SignalDbRecord signal)
+        {
+            SignalStatus status = new SignalStatus
+            {
+                Channel = channel.Name,
+                Code = StatusCode.Success,
+                Type = channel.Type,
+                Message = "Dummy Message"
+            };
+
+            Console.WriteLine($">>> Publishing Signal : [{channel.Type}] [{channel.Name}] [{channel.Target}].");
+
+            if (channel.Type == "slack")
+            {
+                SlackPublisher slack = new SlackPublisher();
+                slack.Id = signal.Id;
+                slack.Channel = channel;
+                slack.Signal = signal.Signal;
+
+                slack.PublishSlackMessage(signal.Id, channel, signal.Signal);
+            }
+
+            return status;
+        }
 
         private SignalDbRecord CreateSignalDbRecord()
         {

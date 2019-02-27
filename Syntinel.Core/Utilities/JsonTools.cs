@@ -12,9 +12,12 @@ namespace Syntinel.Core
             return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public static string Serialize(object obj)
+        public static string Serialize(object obj, bool indent = false)
         {
-            return JsonConvert.SerializeObject(obj);
+            Formatting format = Formatting.None;
+            if (indent)
+                format = Formatting.Indented;
+            return JsonConvert.SerializeObject(obj, format);
         }
     }
 }

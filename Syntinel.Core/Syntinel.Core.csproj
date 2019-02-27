@@ -13,8 +13,12 @@
     <Folder Include="Interfaces\" />
     <Folder Include="Utilities\" />
     <Folder Include="Objects\Internal\" />
+    <Folder Include="Publishers\" />
+    <Folder Include="Objects\Channels\" />
+    <Folder Include="Objects\Channels\Slack\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Include="SlackAPI" Version="1.0.7" />
   </ItemGroup>
 </Project>
