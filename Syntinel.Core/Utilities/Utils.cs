@@ -1,4 +1,8 @@
 ﻿using System;
+using System.Net;
+using System.IO;
+using System.Text;
+using System.Collections.Generic;
 
 namespace Syntinel.Core
 {
@@ -72,6 +76,30 @@ namespace Syntinel.Core
             }
 
             return result;
+        }
+
+        public static WebResponse PostMessage(string url, string body, Dictionary<string, string> headers = null)
+        {
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "POST";
+            request.ContentType = "application/json";
+            if (!String.IsNullOrWhiteSpace(body))
+                request.GetRequestStream().Write(Encoding.ASCII.GetBytes(body));
+
+            if (headers != null)
+                foreach (string header in headers.Keys)
+                    request.Headers.Add(header, headers[header]);
+
+            WebResponse response = request.GetResponse();
+            return response;
+        }
+
+        public static string GetPayload(WebResponse response)
+        {
+            StreamReader reader = new StreamReader(response.GetResponseStream());
+            String payload = reader.ReadToEnd();
+            reader.Close();
+            return payload;
         }
     }
 }

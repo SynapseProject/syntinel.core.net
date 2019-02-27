@@ -13,9 +13,10 @@
     <Folder Include="Interfaces\" />
     <Folder Include="Utilities\" />
     <Folder Include="Objects\Internal\" />
-    <Folder Include="Publishers\" />
+    <Folder Include="Channels\" />
     <Folder Include="Objects\Channels\" />
     <Folder Include="Objects\Channels\Slack\" />
+    <Folder Include="Objects\Channels\AzureBotService\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />

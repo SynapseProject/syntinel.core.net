@@ -64,16 +64,17 @@ namespace Syntinel.Core
                 Message = "Dummy Message"
             };
 
-            Console.WriteLine($">>> Publishing Signal : [{channel.Type}] [{channel.Name}] [{channel.Target}].");
+            Logger.Info($">>> Publishing Signal : [{channel.Type}] [{channel.Name}] [{channel.Target}].");
 
             if (channel.Type == "slack")
             {
-                SlackPublisher slack = new SlackPublisher();
-                slack.Id = signal.Id;
-                slack.Channel = channel;
-                slack.Signal = signal.Signal;
-
-                slack.PublishSlackMessage(signal.Id, channel, signal.Signal);
+                SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
+                //Logger.Info(JsonTools.Serialize(message));
+            }
+            else if (channel.Type == "azure-bot-service")
+            {
+                AzureBotService abs = new AzureBotService();
+                abs.Publish(signal.Id, channel, signal.Signal);
             }
 
             return status;
