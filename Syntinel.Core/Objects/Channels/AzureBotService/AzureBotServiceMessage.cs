@@ -18,7 +18,7 @@ namespace Syntinel.Core
         public string Text { get; set; }
 
         [JsonProperty(PropertyName = "valueType")]
-        public string ValueType { get; set; } = "applicaton/json";
+        public string ValueType { get; set; } = "application/json";
 
         [JsonProperty(PropertyName = "value")]
         public object Value { get; set; }

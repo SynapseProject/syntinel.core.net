@@ -17,6 +17,7 @@
     <Folder Include="Objects\Channels\" />
     <Folder Include="Objects\Channels\Slack\" />
     <Folder Include="Objects\Channels\AzureBotService\" />
+    <Folder Include="Objects\Channels\Teams\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />

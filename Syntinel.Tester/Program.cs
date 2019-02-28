@@ -22,6 +22,7 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db, logger);
 
             TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request-TwoCues.json", FileMode.Open));
             string objectStr = reader.ReadToEnd();
             Signal signal = JsonConvert.DeserializeObject<Signal>(objectStr);
 

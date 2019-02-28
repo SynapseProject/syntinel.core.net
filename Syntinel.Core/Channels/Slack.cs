@@ -26,8 +26,7 @@ namespace Syntinel.Core
             String webHook = request?.Channel?.Target;
             if (webHook != null)
             {
-                // TODO : Re-enable after done testing.
-                //SendMessage(webHook, message);
+                SendMessage(webHook, message);
                 return message;
             }
             else

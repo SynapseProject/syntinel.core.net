@@ -34,13 +34,10 @@ namespace Syntinel.Core
             message.From.Id = request.Id;
             message.Text = $"notify {target}";
 
-            if (channelType == "slack")
+            if (channelType?.ToLower() == "slack")
                 message.Value = Slack.CreateSlackMessage(request);
-            else if (channelType == "msteams")
-            {
-                Console.WriteLine("MS Teams Not Yet Supported.");
-                return;
-            }
+            else if (channelType?.ToLower() == "msteams")
+                message.Value = Teams.CreateTeamsMessage(request);
             else
                 throw new Exception($"Unknown ChannelType [{channelType}].");
 
