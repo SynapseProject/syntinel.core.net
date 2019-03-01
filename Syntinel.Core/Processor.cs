@@ -26,7 +26,7 @@ namespace Syntinel.Core
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
             reply.Id = signalDb.Id;
-            signalDb.Status = StatusType.New.ToString();
+            signalDb.Status = StatusType.New;
             signalDb.Time = DateTime.UtcNow;
             signalDb.Signal = signal;
             signalDb.IsActive = true;
@@ -50,6 +50,9 @@ namespace Syntinel.Core
                 else
                     reply.StatusCode = StatusCode.SuccessWithErrors;
             }
+
+            signalDb.Status = StatusType.Sent;
+            DbEngine.Update(signalDb);
 
             return reply;
         }
@@ -125,9 +128,23 @@ namespace Syntinel.Core
             try
             {
                 ValidateCue(signal, cue);
+
+                Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
+                ResolverRequest request = new ResolverRequest();
+                request.Id = cue.Id;
+                request.ActionId = actionId;
+                request.CueId = cue.CueId;
+                request.Variables = cue.Variables;
+                request.Config = resolver.Config;
+
+                SendToResolver(resolver, request);
+                signal.Status = StatusType.Received;
             }
             catch (Exception e)
             {
+                // TODO : Check for "Terminal" Status As Well.
+                if (signal.Status != StatusType.Received)
+                    signal.Status = StatusType.Invalid;
                 action.Status = StatusType.Error;
                 reply.StatusCode = StatusCode.Failure;
                 reply.StatusMessage = e.Message;
@@ -136,23 +153,40 @@ namespace Syntinel.Core
             signal.Actions.Add(actionId, action);
             DbEngine.Update<SignalDbRecord>(signal, true);
 
-            Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
-
-            ResolverRequest request = new ResolverRequest();
-            request.Id = cue.Id;
-            request.ActionId = actionId;
-            request.CueId = cue.CueId;
-            request.Variables = cue.Variables;
-            request.Config = resolver.Config;
-
-            SendToResolver(resolver, request);
-
             return reply;
         }
 
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
             Console.WriteLine($">>> Sending To Resolver [{resolver.Name}] : {JsonTools.Serialize(request)}");
+        }
+
+        public StatusReply ProcessStatus(Status status)
+        {
+            StatusReply reply = new StatusReply();
+            reply.StatusCode = StatusCode.Success;
+
+            SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(status.Id);
+
+            signal.Status = status.NewStatus;
+            if (status.CloseSignal == true)
+                signal.IsActive = false;
+
+            if (!String.IsNullOrWhiteSpace(status.ActionId))
+            {
+                ActionDbType action = signal.Actions[status.ActionId];
+                action.Status = status.NewStatus;
+                action.IsValid = status.IsValidReply;
+            }
+
+            string traceId = Utils.GenerateId() + "_STATUS";
+            if (signal.Trace == null)
+                signal.Trace = new System.Collections.Generic.Dictionary<string, object>();
+            signal.Trace.Add(traceId, status);
+
+            DbEngine.Update(signal, true);
+
+            return reply;
         }
 
         private SignalDbRecord CreateSignalDbRecord()

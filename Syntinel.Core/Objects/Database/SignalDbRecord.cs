@@ -16,7 +16,8 @@ namespace Syntinel.Core
         public bool? IsActive { get; set; }
 
         [JsonProperty(PropertyName = "_status", NullValueHandling = NullValueHandling.Ignore)]
-        public string Status { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public StatusType Status { get; set; }
 
         [JsonProperty(PropertyName = "_time", NullValueHandling = NullValueHandling.Ignore)]
         public DateTime? Time { get; set; }
@@ -26,6 +27,9 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "actions", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, ActionDbType> Actions { get; set; }
+
+        [JsonProperty(PropertyName = "_trace", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, object> Trace { get; set; }
     }
 
     public class ActionDbType

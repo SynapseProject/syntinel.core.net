@@ -19,11 +19,11 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public StatusType NewStatus { get; set; }
 
-        [JsonProperty(PropertyName = "closeSignal")]
-        public bool CloseSignal { get; set; }
+        [JsonProperty(PropertyName = "closeSignal", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? CloseSignal { get; set; }
 
         [JsonProperty(PropertyName = "isValidReply")]
-        public bool IsValidReply { get; set; }
+        public bool IsValidReply { get; set; } = true;
 
         [JsonProperty(PropertyName = "data")]
         public Dictionary<object, object> Data { get; set; }

@@ -40,7 +40,8 @@ namespace Syntinel.Aws
                 };
 
                 InvokeResponse response = AWSUtilities.CallLambdaMethod(client, lambdaName, JsonTools.Serialize(request));
-            } catch (Exception e)
+            } 
+            catch (Exception e)
             {
                 status.Code = StatusCode.Failure;
                 status.Message = e.Message;

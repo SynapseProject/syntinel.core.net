@@ -32,6 +32,19 @@ namespace Syntinel.Aws
             processor.Logger = new LambdaLogger(log);
             return processor.ProcessSignal(signal);
         }
+
+        public CueReply ProcessCue(Cue cue, ILambdaLogger log)
+        {
+            processor.Logger = new LambdaLogger(log);
+            return processor.ProcessCue(cue);
+        }
+
+        public StatusReply ProcessStatus(Status status, ILambdaLogger log)
+        {
+            processor.Logger = new LambdaLogger(log);
+            return processor.ProcessStatus(status);
+        }
+
     }
 
 }
