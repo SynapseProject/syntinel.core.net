@@ -28,6 +28,19 @@ namespace Syntinel.Tester
 
             SignalReply reply = processor.ProcessSignal(signal);
             Console.WriteLine(JsonTools.Serialize(reply, true));
+
+            string signalId = reply.Id;
+
+            reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Request.json", FileMode.Open));
+            objectStr = reader.ReadToEnd();
+            Cue cue = JsonConvert.DeserializeObject<Cue>(objectStr);
+
+            cue.Id = signalId;
+
+            CueReply cueReply = processor.ProcessCue(cue);
+            Console.WriteLine(JsonTools.Serialize(cueReply, true));
+
+
         }
     }
 

@@ -4,11 +4,11 @@ namespace Syntinel.Core
 {
     public enum VariableType
     {
-        Number,         // Inputs : Numeric Value
-        Text,           // Inputs : Text Value
-        Boolean,        // Inputs : Boolean Value
-        Choice,         // Inputs and Actions : List of Options
-        Button,         // Actions : Submit
-        Link            // Actions : Open Hyperlink
+        number,         // Inputs : Numeric Value
+        text,           // Inputs : Text Value
+        boolean,        // Inputs : Boolean Value
+        choice,         // Inputs and Actions : List of Options
+        button,         // Actions : Submit
+        link            // Actions : Open Hyperlink
     }
 }

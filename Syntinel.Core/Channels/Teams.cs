@@ -98,7 +98,7 @@ namespace Syntinel.Core
             foreach (SignalVariable action in cue.Actions)
             {
                 TeamsAction myAction = new TeamsAction();
-                if (action.Type == VariableType.Button)
+                if (action.Type == VariableType.button)
                 {
                     myAction.Type = "Action.Submit";
                     myAction.Id = "action";
@@ -109,7 +109,7 @@ namespace Syntinel.Core
 
                     card.Actions.Add(myAction);
                 }
-                else if (action.Type == VariableType.Choice)
+                else if (action.Type == VariableType.choice)
                 {
                     myAction.Type = "Action.ShowCard";
                     myAction.Title = action.Name;

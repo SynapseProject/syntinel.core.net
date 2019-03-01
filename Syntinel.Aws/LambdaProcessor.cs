@@ -17,7 +17,7 @@ namespace Syntinel.Aws
         {
         }
 
-        public override SignalStatus PublishSignal(ChannelDbType channel, SignalDbRecord signal)
+        public override SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
         {
             SignalStatus status = new SignalStatus
             {
@@ -47,6 +47,13 @@ namespace Syntinel.Aws
             }
 
             return status;
+        }
+
+        public override void SendToResolver(Resolver resolver, ResolverRequest request)
+        {
+            String lambdaName = $"syntinel-resolver-{resolver.Name}";
+            Logger.Info($"Sending Requst To {resolver.Name} ({lambdaName})");
+            InvokeResponse response = AWSUtilities.CallLambdaMethod(client, lambdaName, JsonTools.Serialize(request));
         }
     }
 }

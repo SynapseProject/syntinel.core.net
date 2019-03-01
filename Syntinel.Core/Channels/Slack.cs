@@ -86,7 +86,7 @@ namespace Syntinel.Core
 
             switch (action.Type)
             {
-                case VariableType.Choice:
+                case VariableType.choice:
                     slackAction.Type = SlackActionType.select;
                     foreach (string key in action.Values.Keys)
                     {
@@ -97,7 +97,7 @@ namespace Syntinel.Core
                     }
                     break;
 
-                case VariableType.Button:
+                case VariableType.button:
                     slackAction.Type = SlackActionType.button;
                     slackAction.Text = action.Description;
                     break;

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
@@ -32,13 +34,14 @@ namespace Syntinel.Core
         public bool IsValid { get; set; }
 
         [JsonProperty(PropertyName = "_status")]
+        [JsonConverter(typeof(StringEnumConverter))]
         public StatusType Status { get; set; }
 
         [JsonProperty(PropertyName = "_time")]
         public DateTime Time { get; set; }
 
-        [JsonProperty(PropertyName = "cue")]
-        public string Cue { get; set; }
+        [JsonProperty(PropertyName = "cueId")]
+        public string CueId { get; set; }
 
         [JsonProperty(PropertyName = "variables")]
         public List<VariableDbType> Variables { get; set; } = new List<VariableDbType>();

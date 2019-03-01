@@ -37,7 +37,7 @@ namespace Syntinel.Core
             foreach (ChannelDbType channel in reporter.Channels)
             {
                 channelCount++;
-                SignalStatus status = PublishSignal(channel, signalDb);
+                SignalStatus status = SendToChannel(channel, signalDb);
                 reply.Results.Add(status);
                 if (status.Code == StatusCode.Failure)
                     errorCount++;
@@ -54,7 +54,7 @@ namespace Syntinel.Core
             return reply;
         }
 
-        public virtual SignalStatus PublishSignal(ChannelDbType channel, SignalDbRecord signal)
+        public virtual SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
         {
             SignalStatus status = new SignalStatus
             {
@@ -64,20 +64,95 @@ namespace Syntinel.Core
                 Message = "Dummy Message"
             };
 
-            Logger.Info($">>> Publishing Signal : [{channel.Type}] [{channel.Name}] [{channel.Target}].");
-
-            if (channel.Type == "slack")
+            try
             {
-                SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
-                //Logger.Info(JsonTools.Serialize(message));
-            }
-            else if (channel.Type == "azure-bot-service")
+                if (channel.Type == "slack")
+                {
+                    SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
+                    //Logger.Info(JsonTools.Serialize(message));
+                }
+                else if (channel.Type == "azure-bot-service")
+                {
+                    AzureBotService abs = new AzureBotService();
+                    abs.Publish(signal.Id, channel, signal.Signal);
+                }
+                else
+                    throw new Exception($"Unknown Channel Type [{channel.Type}].");
+            } 
+            catch (Exception e)
             {
-                AzureBotService abs = new AzureBotService();
-                abs.Publish(signal.Id, channel, signal.Signal);
+                status.Code = StatusCode.Failure;
+                status.Message = e.Message;
             }
 
             return status;
+        }
+
+        public CueReply ProcessCue(Cue cue)
+        {
+            string actionId = "CUE_" + Utils.GenerateId();
+            CueReply reply = new CueReply
+            {
+                ActionId = actionId,
+                Id = cue.Id,
+                StatusCode = StatusCode.Success,
+                Time = DateTime.UtcNow
+            };
+
+            SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(cue.Id);
+
+            ActionDbType action = new ActionDbType
+            {
+                CueId = cue.CueId,
+                Status = StatusType.New,
+                IsValid = true,
+                Time = DateTime.UtcNow
+            };
+
+            foreach (CueVariable var in cue.Variables)
+            {
+                VariableDbType varDb = new VariableDbType
+                {
+                    Name = var.Name,
+                    Values = var.Values
+                };
+                action.Variables.Add(varDb);
+            }
+
+            if (signal.Actions == null)
+                signal.Actions = new System.Collections.Generic.Dictionary<string, ActionDbType>();
+
+            try
+            {
+                ValidateCue(signal, cue);
+            }
+            catch (Exception e)
+            {
+                action.Status = StatusType.Error;
+                reply.StatusCode = StatusCode.Failure;
+                reply.StatusMessage = e.Message;
+            }
+
+            signal.Actions.Add(actionId, action);
+            DbEngine.Update<SignalDbRecord>(signal, true);
+
+            Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
+
+            ResolverRequest request = new ResolverRequest();
+            request.Id = cue.Id;
+            request.ActionId = actionId;
+            request.CueId = cue.CueId;
+            request.Variables = cue.Variables;
+            request.Config = resolver.Config;
+
+            SendToResolver(resolver, request);
+
+            return reply;
+        }
+
+        public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
+        {
+            Console.WriteLine($">>> Sending To Resolver [{resolver.Name}] : {JsonTools.Serialize(request)}");
         }
 
         private SignalDbRecord CreateSignalDbRecord()
@@ -110,6 +185,25 @@ namespace Syntinel.Core
                 throw lastException;
 
             return dbRecord;
+        }
+
+        private string ValidateCue(SignalDbRecord signal, Cue cue)
+        {
+            if (signal.IsActive == false)
+                return $"Signal [{cue.Id}] Is Not Active.";
+
+            if (signal.Signal.MaxReplies > 0)
+            {
+                int validCount = 0;
+                foreach (string actionKey in signal.Actions.Keys)
+                    if (signal.Actions[actionKey].IsValid)
+                        validCount++;
+
+                if (validCount >= signal.Signal.MaxReplies)
+                    return $"Signal [{cue.Id}] Has Exceeded the Maximum Valid Replies Allowed.";
+            }
+
+            return null;
         }
     }
 }

@@ -6,24 +6,21 @@ using Newtonsoft.Json.Serialization;
 
 namespace Syntinel.Core
 {
-    public class Cue
+    public class ResolverRequest
     {
         [JsonProperty(PropertyName = "id")]
         public string Id { get; set; }
+
+        [JsonProperty(PropertyName = "actionId")]
+        public string ActionId { get; set; }
 
         [JsonProperty(PropertyName = "cueId")]
         public string CueId { get; set; }
 
         [JsonProperty(PropertyName = "variables")]
-        public List<CueVariable> Variables { get; set; } = new List<CueVariable>();
-    }
+        public List<CueVariable> Variables { get; set; }
 
-    public class CueVariable
-    {
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
-
-        [JsonProperty(PropertyName = "values")]
-        public List<string> Values { get; set; } = new List<string>();
+        [JsonProperty(PropertyName = "config")]
+        public Dictionary<object, object> Config { get; set; }
     }
 }
