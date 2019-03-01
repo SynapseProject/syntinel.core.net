@@ -12,14 +12,12 @@ namespace Syntinel.Aws
     public class LambdaFunctions
     {
         public IDatabaseEngine db;
-        public ILogger logger;
         public LambdaProcessor processor;
 
         public LambdaFunctions()
         {
             db = new DynamoDbEngine();
-            logger = new LambdaLogger();
-            processor = new LambdaProcessor(db, logger);
+            processor = new LambdaProcessor(db);
         }
 
         public string Hello(string input, ILambdaLogger log)

@@ -6,12 +6,13 @@ namespace Syntinel.Core
     public class Processor
     {
         readonly IDatabaseEngine DbEngine;
-        public ILogger Logger;
+        public ILogger Logger = new NullLogger();
 
         public Processor(IDatabaseEngine engine, ILogger logger = null)
         {
             DbEngine = engine;
-            Logger = logger;
+            if (logger != null)
+                Logger = logger;
         }
 
         public SignalReply ProcessSignal(Signal signal)
