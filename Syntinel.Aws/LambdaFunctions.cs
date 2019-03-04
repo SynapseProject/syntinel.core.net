@@ -56,6 +56,14 @@ namespace Syntinel.Aws
             return abs.Publish(request);
         }
 
+        public CueReply CueSubscriberSlack(SlackReply reply, ILambdaLogger log)
+        {
+            processor.Logger = new LambdaLogger(log);
+            Cue cue = Slack.CreateCue(reply);
+            CueReply cueReply = processor.ProcessCue(cue);
+            return cueReply;
+        }
+
     }
 
 }
