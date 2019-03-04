@@ -11,7 +11,7 @@ namespace Syntinel.Core
         public string BaseUrl = @"https://directline.botframework.com/v3/directline/conversations";
 
 
-        public void Publish(string id, ChannelDbType channel, Signal signal)
+        public AzureBotServiceMessage Publish(string id, ChannelDbType channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {
@@ -20,10 +20,10 @@ namespace Syntinel.Core
                 Signal = signal
             };
 
-            Publish(request);
+            return Publish(request);
         }
 
-        public void Publish(ChannelRequest request)
+        public AzureBotServiceMessage Publish(ChannelRequest request)
         {
             BearerToken = (String)request.Channel.Config["bearerToken"];
             ConversationId = GetConversationId();
@@ -42,6 +42,7 @@ namespace Syntinel.Core
                 throw new Exception($"Unknown ChannelType [{channelType}].");
 
             SendMessage(message);
+            return message;
 
         }
 

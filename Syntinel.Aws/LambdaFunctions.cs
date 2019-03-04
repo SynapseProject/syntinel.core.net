@@ -43,6 +43,19 @@ namespace Syntinel.Aws
             return processor.ProcessStatus(status);
         }
 
+        public SlackMessage SignalPublisherSlack(ChannelRequest request, ILambdaLogger log)
+        {
+            processor.Logger = new LambdaLogger(log);
+            return Slack.Publish(request);
+        }
+
+        public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaLogger log)
+        {
+            processor.Logger = new LambdaLogger(log);
+            AzureBotService abs = new AzureBotService();
+            return abs.Publish(request);
+        }
+
     }
 
 }
