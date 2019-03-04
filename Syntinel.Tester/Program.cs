@@ -12,9 +12,25 @@ using Newtonsoft.Json.Serialization;
 
 namespace Syntinel.Tester
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
+        {
+            DynamoDbEngine db = new DynamoDbEngine(RegionEndpoint.USEast1);
+            ILogger logger = new ConsoleLogger();
+            //LambdaProcessor processor = new LambdaProcessor(db, logger);
+            Processor processor = new Processor(db, logger);
+
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-Slack.json", FileMode.Open));
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-AzureBotService.json", FileMode.Open));
+            string objectStr = reader.ReadToEnd();
+            SlackReply reply = JsonTools.Deserialize<SlackReply>(objectStr);
+            Cue cue = Slack.CreateCue(reply);
+
+            processor.ProcessCue(cue);
+        }
+
+        public static void TestProcessor(string[] args)
         {
             DynamoDbEngine db = new DynamoDbEngine(RegionEndpoint.USEast1);
             ILogger logger = new ConsoleLogger();

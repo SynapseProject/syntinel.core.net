@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Web;
+using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.IO;
@@ -31,6 +33,54 @@ namespace Syntinel.Core
             }
             else
                 throw new Exception("No Target Information Was Provided.");
+        }
+
+        public static Cue CreateCue(SlackReply reply)
+        {
+            if (reply.BodyJson != null)
+            {
+                // Reply Came Directly From Slack.  Decode the payload
+                string body = reply.BodyJson;
+                if (body.StartsWith("payload=", StringComparison.OrdinalIgnoreCase))
+                {
+                    body = body.Replace("payload=", "", StringComparison.OrdinalIgnoreCase);
+                    body = body.Replace('+', ' ');
+                    body = HttpUtility.UrlDecode(body);
+                    reply.Payload = JsonTools.Deserialize<SlackPayload>(body);
+                }
+            }
+
+            SlackPayload payload = reply?.Payload;
+            if (payload == null)
+                throw new Exception("Slack Reply Payload Not Found.");
+
+            string callbackId = payload.CallbackId;
+            string signalId = callbackId.Split('|')[0];
+            string cueId = HttpUtility.HtmlDecode(callbackId.Split('|')[1]);
+
+            Cue cue = new Cue
+            {
+                Id = signalId,
+                CueId = cueId
+            };
+
+            CueVariable actionVariable = new CueVariable
+            {
+                Name = "action"
+            };
+
+            foreach (SlackReplyAction actionReply in payload.Actions)
+            {
+                if (actionReply.Type == "select")
+                    foreach (Dictionary<string, string> option in actionReply.SelectedOptions)
+                        actionVariable.Values.Add(option["value"]);
+                else if (actionReply.Type == "button")
+                    actionVariable.Values.Add(actionReply.Value);
+            }
+
+            cue.Variables.Add(actionVariable);
+
+            return cue;
         }
 
         public static void SendMessage(string webHook, SlackMessage message)

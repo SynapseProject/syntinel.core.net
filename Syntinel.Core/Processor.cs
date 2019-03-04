@@ -104,6 +104,8 @@ namespace Syntinel.Core
             };
 
             SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(cue.Id);
+            if (signal == null)
+                throw new Exception($"Signal [{cue.Id}] Not Found.");
 
             ActionDbType action = new ActionDbType
             {
