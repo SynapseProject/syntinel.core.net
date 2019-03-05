@@ -21,6 +21,6 @@ namespace Syntinel.Core
         public List<CueVariable> Variables { get; set; }
 
         [JsonProperty(PropertyName = "config")]
-        public Dictionary<object, object> Config { get; set; }
+        public Dictionary<string, object> Config { get; set; }
     }
 }
