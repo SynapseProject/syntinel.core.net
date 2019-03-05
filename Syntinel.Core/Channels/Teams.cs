@@ -2,6 +2,9 @@
 using System.Net;
 using System.Text;
 using System.IO;
+using System.Web;
+using System.Collections.Generic;
+
 
 namespace Syntinel.Core
 {
@@ -28,7 +31,34 @@ namespace Syntinel.Core
             return message;
         }
 
-        public static TeamsMessage CreateTeamsMessage(ChannelRequest request)
+        public static Cue CreateCue(Dictionary<string,object> reply)
+        {
+            Cue cue = new Cue();
+
+            string callbackId = (string)reply["callback_id"];
+            string signalId = callbackId.Split('|')[0];
+            string cueId = HttpUtility.HtmlDecode(callbackId.Split('|')[1]);
+
+            cue.Id = signalId;
+            cue.CueId = cueId;
+
+            foreach (string key in reply.Keys)
+            {
+                if (key != "callback_id")
+                {
+                    CueVariable variable = new CueVariable();
+                    variable.Name = key;
+                    // TOOD: Might have to split value by commans for multi-value field types.
+                    variable.Values.Add((string)reply[key]);
+
+                    cue.Variables.Add(variable);
+                }
+            }
+
+            return cue;
+        }
+
+            public static TeamsMessage CreateTeamsMessage(ChannelRequest request)
         {
             TeamsMessage message = new TeamsMessage();
             message.Body.Add(new TeamsBody());

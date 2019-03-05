@@ -149,6 +149,7 @@ namespace Syntinel.Core
                 if (signal.Status != StatusType.Received)
                     signal.Status = StatusType.Invalid;
                 action.Status = StatusType.Error;
+                action.StatusMessage = e.Message;
                 reply.StatusCode = StatusCode.Failure;
                 reply.StatusMessage = e.Message;
             }
@@ -226,6 +227,15 @@ namespace Syntinel.Core
 
         private string ValidateCue(SignalDbRecord signal, Cue cue)
         {
+            try
+            {
+                CueOption cueExists = signal.Signal.Cues[cue.CueId];
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Cue [{cue.CueId}] Does Not Exist In Signal [{signal.Id}].");
+            }
+
             if (signal.IsActive == false)
                 return $"Signal [{cue.Id}] Is Not Active.";
 

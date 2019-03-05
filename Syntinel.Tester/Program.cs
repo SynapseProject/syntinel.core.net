@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 using Syntinel.Core;
 using Syntinel.Aws;
@@ -22,12 +23,20 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db, logger);
 
             //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-Slack.json", FileMode.Open));
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-AzureBotService.json", FileMode.Open));
-            string objectStr = reader.ReadToEnd();
-            SlackReply reply = JsonTools.Deserialize<SlackReply>(objectStr);
-            Cue cue = Slack.CreateCue(reply);
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-AzureBotService.json", FileMode.Open));
+            //string objectStr = reader.ReadToEnd();
+            //SlackReply reply = JsonTools.Deserialize<SlackReply>(objectStr);
+            //Cue cue = Slack.CreateCue(reply);
 
-            processor.ProcessCue(cue);
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Cue-Reply-Teams.json", FileMode.Open));
+            string objectStr = reader.ReadToEnd();
+            Dictionary<string, object> reply = JsonTools.Deserialize<Dictionary<string,object>>(objectStr);
+            Cue cue = Teams.CreateCue(reply);
+
+            Console.WriteLine(JsonTools.Serialize(cue, true));
+
+            CueReply cueReply = processor.ProcessCue(cue);
+            Console.WriteLine(JsonTools.Serialize(cueReply, true));
         }
 
         public static void TestProcessor(string[] args)

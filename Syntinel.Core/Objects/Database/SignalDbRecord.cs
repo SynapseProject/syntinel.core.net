@@ -41,6 +41,9 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public StatusType Status { get; set; }
 
+        [JsonProperty(PropertyName = "_statusMessage", NullValueHandling = NullValueHandling.Ignore)]
+        public string StatusMessage { get; set; }
+
         [JsonProperty(PropertyName = "_time")]
         public DateTime Time { get; set; }
 
