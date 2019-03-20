@@ -8,16 +8,20 @@ using Amazon;
 using Amazon.EC2;
 using Amazon.EC2.Model;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
 namespace Syntinel.Aws.Resolvers
 {
-    public class Ec2Utils
+    public static class Ec2Utils
     {
 
         public static Core.Status SetInstanceState(ResolverRequest request, int timeout = 30000)
         {
             Core.Status status = new Core.Status();
 
-            List<string> instances = (List<string>)request.Config["instances"];
+            String configString = JsonTools.Serialize(request.Config);
+            Ec2UtilsConfig config = JsonTools.Deserialize<Ec2UtilsConfig>(configString);
             string action = null;
             foreach (CueVariable var in request.Variables)
                 if (var.Name == "action")
@@ -27,7 +31,7 @@ namespace Syntinel.Aws.Resolvers
                 throw new Exception("Required Variable [action] Was Not Found.");
 
             Ec2InstanceState state = Enum.Parse<Ec2InstanceState>(action, true);
-            List<InstanceStatus> states = SetInstanceState(instances, state, timeout);
+            List<InstanceStatus> states = SetInstanceState(config.Instances, state, timeout);
 
             status.Id = request.Id;
             status.ActionId = request.ActionId;
@@ -108,5 +112,11 @@ namespace Syntinel.Aws.Resolvers
 
             return reply.InstanceStatuses;
         }
-    }   
+    }
+
+    public class Ec2UtilsConfig
+    {
+        [JsonProperty(PropertyName = "instances")]
+        public List<string> Instances { get; set; }
+    }
 }

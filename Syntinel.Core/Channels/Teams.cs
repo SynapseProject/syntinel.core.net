@@ -58,7 +58,7 @@ namespace Syntinel.Core
             return cue;
         }
 
-            public static TeamsMessage CreateTeamsMessage(ChannelRequest request)
+        public static TeamsMessage CreateTeamsMessage(ChannelRequest request)
         {
             TeamsMessage message = new TeamsMessage();
             message.Body.Add(new TeamsBody());

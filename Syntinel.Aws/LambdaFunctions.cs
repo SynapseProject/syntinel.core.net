@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Syntinel.Core;
-using Amazon.Lambda.Serialization;
+using Syntinel.Aws.Resolvers;
 using Amazon.Lambda.Core;
 
 // Allows Lambda Function's JSON Input to be converted into a .NET class
@@ -25,45 +26,81 @@ namespace Syntinel.Aws
             return "Hello From Syntinel Core!";
         }
 
-        public SignalReply ProcessSignal(Signal signal, ILambdaLogger log)
+        public SignalReply ProcessSignal(Signal signal, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
-            return processor.ProcessSignal(signal);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(signal));
+            SignalReply reply = processor.ProcessSignal(signal);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
         }
 
-        public CueReply ProcessCue(Cue cue, ILambdaLogger log)
+        public CueReply ProcessCue(Cue cue, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
-            return processor.ProcessCue(cue);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(cue));
+            CueReply reply = processor.ProcessCue(cue);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
         }
 
-        public StatusReply ProcessStatus(Status status, ILambdaLogger log)
+        public StatusReply ProcessStatus(Status status, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
-            return processor.ProcessStatus(status);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(status));
+            StatusReply reply = processor.ProcessStatus(status);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
+
         }
 
-        public SlackMessage SignalPublisherSlack(ChannelRequest request, ILambdaLogger log)
+        public SlackMessage SignalPublisherSlack(ChannelRequest request, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
-            return Slack.Publish(request);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(request));
+            SlackMessage reply = Slack.Publish(request);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
         }
 
-        public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaLogger log)
+        public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(request));
             AzureBotService abs = new AzureBotService();
-            return abs.Publish(request);
+            AzureBotServiceMessage reply = abs.Publish(request);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
         }
 
-        public CueReply CueSubscriberSlack(SlackReply reply, ILambdaLogger log)
+        public CueReply CueSubscriberSlack(SlackReply reply, ILambdaContext ctx)
         {
-            processor.Logger = new LambdaLogger(log);
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Slack.CreateCue(reply);
             CueReply cueReply = processor.ProcessCue(cue);
+            processor.Logger.Info(JsonTools.Serialize(cueReply));
             return cueReply;
         }
 
+        public CueReply CueSubscriberTeams(Dictionary<string,object> reply, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            Cue cue = Teams.CreateCue(reply);
+            CueReply cueReply = processor.ProcessCue(cue);
+            processor.Logger.Info(JsonTools.Serialize(cueReply));
+            return cueReply;
+        }
+
+        public Status Ec2UtilsSetInstanceState(ResolverRequest request, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(request));
+            Status status = Ec2Utils.SetInstanceState(request);
+            processor.Logger.Info(JsonTools.Serialize(status));
+            return status;
+        }
     }
 
 }

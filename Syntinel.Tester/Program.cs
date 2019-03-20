@@ -20,24 +20,11 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
-            List<string> instances = new List<string>
-            {
-                "i-009cffa33db569230"
-            };
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Resolvers/Ec2Utils-SetInstanceState.json", FileMode.Open));
+            string objectString = reader.ReadToEnd();
 
-            ResolverRequest request = new ResolverRequest();
-            CueVariable var = new CueVariable
-            {
-                Name = "action"
-            };
-            var.Values.Add("stop");
-            request.Variables = new List<CueVariable>();
-            request.Variables.Add(var);
-
-            request.Config = new Dictionary<string, object>
-            {
-                { "instances", instances }
-            };
+            ResolverRequest request = JsonTools.Deserialize<ResolverRequest>(objectString);
+            Console.WriteLine(JsonTools.Serialize(request, true));
 
             Status status = Ec2Utils.SetInstanceState(request);
             Console.WriteLine(JsonTools.Serialize(status, true));
