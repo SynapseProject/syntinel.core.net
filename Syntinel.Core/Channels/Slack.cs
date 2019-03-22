@@ -138,6 +138,7 @@ namespace Syntinel.Core
             {
                 case VariableType.choice:
                     slackAction.Type = SlackActionType.select;
+                    slackAction.Options = new List<SlackSelectOption>();
                     foreach (string key in action.Values.Keys)
                     {
                         SlackSelectOption option = new SlackSelectOption();

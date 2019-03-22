@@ -43,14 +43,14 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public SlackActionType Type { get; set; }
 
-        [JsonProperty(PropertyName = "text")]
+        [JsonProperty(PropertyName = "text", NullValueHandling = NullValueHandling.Ignore)]
         public string Text { get; set; }
 
         [JsonProperty(PropertyName = "value")]
         public string Value { get; set; }
 
-        [JsonProperty(PropertyName = "options")]
-        public List<SlackSelectOption> Options { get; set; } = new List<SlackSelectOption>();
+        [JsonProperty(PropertyName = "options", NullValueHandling = NullValueHandling.Ignore)]
+        public List<SlackSelectOption> Options { get; set; }
     }
 
     public class SlackSelectOption
