@@ -26,7 +26,7 @@ namespace Syntinel.Tester
             ResolverRequest request = JsonTools.Deserialize<ResolverRequest>(objectString);
             Console.WriteLine(JsonTools.Serialize(request, true));
 
-            Status status = Ec2Utils.SetInstanceState(request);
+            Status status = Ec2Utils.SetInstanceState(request, RegionEndpoint.USEast1);
             Console.WriteLine(JsonTools.Serialize(status, true));
         }
     }

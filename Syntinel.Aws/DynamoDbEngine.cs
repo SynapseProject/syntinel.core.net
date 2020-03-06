@@ -23,11 +23,6 @@ namespace Syntinel.Aws
             client = new AmazonDynamoDBClient();
         }
 
-        public DynamoDbEngine(RegionEndpoint region)
-        {
-            client = new AmazonDynamoDBClient(region);
-        }
-
         private string GetTableName(System.Type t)
         {
             string tableName = "";

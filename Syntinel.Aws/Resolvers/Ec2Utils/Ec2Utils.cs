@@ -16,7 +16,7 @@ namespace Syntinel.Aws.Resolvers
     public static class Ec2Utils
     {
 
-        public static Core.Status SetInstanceState(ResolverRequest request, int timeout = 30000)
+        public static Core.Status SetInstanceState(ResolverRequest request, RegionEndpoint region, int timeout = 30000)
         {
             Core.Status status = new Core.Status();
 
@@ -31,7 +31,7 @@ namespace Syntinel.Aws.Resolvers
                 throw new Exception("Required Variable [action] Was Not Found.");
 
             Ec2InstanceState state = Enum.Parse<Ec2InstanceState>(action, true);
-            List<InstanceStatus> states = SetInstanceState(config.Instances, state, timeout);
+            List<InstanceStatus> states = SetInstanceState(config.Instances, state, region, timeout);
 
             status.Id = request.Id;
             status.ActionId = request.ActionId;
@@ -45,9 +45,9 @@ namespace Syntinel.Aws.Resolvers
             return status;
         }
 
-        public static List<InstanceStatus> SetInstanceState(List<string> instances, Ec2InstanceState state, int timeout = 30000)
+        public static List<InstanceStatus> SetInstanceState(List<string> instances, Ec2InstanceState state, RegionEndpoint region, int timeout = 30000)
         {
-            AmazonEC2Client client = new AmazonEC2Client(RegionEndpoint.USEast1);
+            AmazonEC2Client client = new AmazonEC2Client(region);
 
             switch (state)
             {

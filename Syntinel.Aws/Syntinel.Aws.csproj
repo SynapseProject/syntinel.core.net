@@ -35,4 +35,7 @@
     <Folder Include="Resolvers\" />
     <Folder Include="Resolvers\Ec2Utils\" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Settings.cs" />
+  </ItemGroup>
 </Project>

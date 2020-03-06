@@ -11,7 +11,8 @@ namespace Syntinel.Aws
 {
     public class LambdaProcessor : Processor
     {
-        public AmazonLambdaClient client = new AmazonLambdaClient(RegionEndpoint.USEast1);
+        public static LambdaConfig config = new LambdaConfig();
+        public AmazonLambdaClient client = new AmazonLambdaClient(config.Region);
 
         public LambdaProcessor(IDatabaseEngine engine, ILogger logger = null) : base (engine, logger)
         {
