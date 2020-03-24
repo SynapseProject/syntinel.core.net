@@ -1,0 +1,251 @@
+########################################
+### Used When IAM Roles Must Be Created Separately.  This template requires a parameter that gives the name of the
+### CloudFormation Stack used to create the IAM roles for Syntinel.  This is primarily used within corporations where
+### the role required to create IAM policies and roles is separate from the role used to create objects that use those
+### policies.
+########################################
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Runs all the individual templates to create the entire Syntinel application.
+
+Parameters:
+  # S3 Locations
+  S3BucketName:
+    Type: String
+    Default: ***** Your Bucket Name Here *****
+    Description: (Required) The name for the S3 bucket that contains the cloudformation tempates and lambda code.
+  S3BucketPrefix:
+    Type: String
+    Description: (Optional) The S3 prefix (folder path) added to each template path.  DO NOT INCLUDE LEADING OR TRAILING SLASHES.
+
+  # CloudFormation Template Names
+  IamCloudStackName:
+    Type: String
+    Default: "syntinel-core-iam"
+    Description: (Required) The name for the cloudformation stack used to create the IAM policies.
+  CoreDatabaseTemplate:
+    Type: String
+    Default: cf-templates/core/cft-syntinel-core-database.yaml
+    Description: (Required) The path to the template file for creating databases.  DO NOT INCLUDE LEADING SLASHES.
+  CoreLambdaTemplate:
+    Type: String
+    Default: cf-templates/core/cft-syntinel-core-lambda.yaml
+    Description: (Required) The path to the template file for creating the core lambda functions.  DO NOT INCLUDE LEADING SLASHES.
+  CoreApiGatewayTemplate:
+    Type: String
+    Default: cf-templates/core/cft-syntinel-core-apigateway.yaml
+    Description: (Required) The path to the template file for creating the core api gateway.  DO NOT INCLUDE LEADING SLASHES.
+  CoreApiDeployTemplate:
+    Type: String
+    Default: cf-templates/core/cft-syntinel-deploy.yaml
+    Description: (Required) The path to the template file for deploying the api gateway.  DO NOT INCLUDE LEADING SLASHES.
+
+  # Channel Specific Templates
+  ChannelSlackTemplate:
+    Type: String
+    Default: cf-templates/channels/cft-syntinel-channel-slack.yaml
+    Description: (Optional) The path to the template file for creating the slack channel objects.  Leave blank to not include the channel.  DO NOT INCLUDE LEADING SLASHES.
+
+  # Resolver Templates
+  ResolverEc2UtilsTemplate:
+    Type: String
+    Default: cf-templates/resolvers/cft-syntinel-resolver-ec2utils.yaml
+    Description: (Optional) The path to the template file that creates the resolver lambda functions for EC2 manipulation.  Leave blank to not include the channel.  DO NOT INCLUDE LEADING SLASHES.
+
+  # Database Parameters
+  ReportersTableName:
+    Type: String
+    Default: syntinel-reporters
+    Description: The name for the DynamoDB table that contains information about the reporters (Who sent the signal).
+  SignalsTableName:
+    Type: String
+    Default: syntinel-signals
+    Description: The name for the DynamoDB table that contains the signal messages and any replies received.
+
+  # Lambda Parameters
+  ### Lambda Function IAM Roles
+  GlobalLambdaRole:
+    Type: String
+    Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the CloudFormation stack.
+  LocalLambdaRoleProcessSignal:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleProcessCue:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleProcessStatus:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  ### Lambda Function DotNet Core Code Locations
+  LambdaCodeBucketKey:
+    Type: String
+    Default: code/Syntinel.Aws.zip
+    Description: The S3 Key for the zip file containing the lambda DotNet Core code.
+  ### Lambda Function Names
+  ProcessSignalFunctionName:
+    Type: String
+    Default: syntinel-process-signal
+    Description: The name for the function that receives and processes signals from reporters.
+  ProcessCueFunctionName:
+    Type: String
+    Default: syntinel-process-cue
+    Description: The name for the function that receives and processes signals from reporters.
+  ProcessStatusFunctionName:
+    Type: String
+    Default: syntinel-process-status
+    Description: The name for the function that receives and processes signals from reporters.
+  ### Channel Specific Lambda Function Prefixes
+  ChannelPublisherPrefix:
+    Type: String
+    Default: syntinel-signal-publisher
+    Description: The prefix name for the functions that send signal messages out to channels.  (Example = syntinel-signal-publisher-slack)
+  ChannelSubscriberPrefix:
+    Type: String
+    Default: syntinel-cue-subscriber
+    Description: The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
+  ### Resolver Specific Lambda Function Names
+  ResolverEc2UtilsSetInstanceFunctionName:
+    Type: String
+    Default: syntinel-resolver-ec2-setstate
+    Description: The name for the function that sets state on an EC2 instance.
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "REQUIRED INPUT"
+      Parameters:
+      - S3BucketName
+      - S3BucketPrefix
+      - IamCloudStackName
+    - Label:
+        default: "ADVANCED CONFIGURATION: Core CloudFormation Templates"
+      Parameters:
+      - CoreDatabaseTemplate
+      - CoreLambdaTemplate
+      - CoreApiGatewayTemplate
+      - CoreApiDeployTemplate
+    - Label:
+        default: "ADVANCED CONFIGURATION: Channel Specific CloudFormation Templates.  Leave value blank to exclude the channel type from your Syntinel deployment."
+      Parameters:
+      - ChannelSlackTemplate
+    - Label:
+        default: "ADVANCED CONFIGURATION: Resolver Specific CloudFormation Templates.  Leave value blank to exclude the channel type from your Syntinel deployment."
+      Parameters:
+      - ResolverEc2UtilsTemplate
+    - Label:
+        default: "ADVANCED CONFIGURATION: Database Variables"
+      Parameters:
+      - ReportersTableName
+      - SignalsTableName
+    - Label:
+        default: "ADVANCED CONFIGURATION: Lambda Variables"
+      Parameters:
+      - LambdaCodeBucketKey
+      - GlobalLambdaRole
+      - LocalLambdaRoleProcessSignal
+      - LocalLambdaRoleProcessCue
+      - LocalLambdaRoleProcessStatus
+      - ProcessSignalFunctionName
+      - ProcessCueFunctionName
+      - ProcessStatusFunctionName
+      - ChannelPublisherPrefix
+      - ChannelSubscriberPrefix
+    - Label:
+        default: "ADVANCED CONFIGURATION: Resolver Specific Variables"
+      Parameters:
+      - ResolverEc2UtilsSetInstanceFunctionName
+
+Conditions:
+    S3PrefixProvided : !Not [ !Equals [!Ref S3BucketPrefix, ""] ]
+    ChannelSlackTemplateProvided: !Not [ !Equals [!Ref ChannelSlackTemplate, ""] ]    
+    ResolverEc2UtilsTemplateProvided: !Not [ !Equals [!Ref ResolverEc2UtilsTemplate, ""] ]
+
+Resources:
+  SyntinelDatabaseStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref CoreDatabaseTemplate ] ]
+      Parameters:
+        ReportersTableName: !Ref ReportersTableName
+        SignalsTableName: !Ref SignalsTableName
+
+  SyntinelLambdaStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref CoreLambdaTemplate ] ]
+      Parameters:
+        IamCloudStackName: !Ref IamCloudStackName
+        GlobalLambdaRole: !Ref GlobalLambdaRole
+        LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
+        LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
+        LocalLambdaRoleProcessStatus: !Ref LocalLambdaRoleProcessStatus
+#        SyntinelCodeBucketName: !Ref S3BucketName    # TODO : Uncomment Me Once Completed, Delete Next Line.
+        SyntinelCodeBucketName: syntinel-temp         # TODO : Delete Me
+        SyntinelCodeBucketKey: !Join [ "", [ !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref LambdaCodeBucketKey ] ]
+        ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
+        ProcessCueFunctionName: !Ref ProcessCueFunctionName
+        ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+        ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
+        ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
+
+  SyntinelApiGatewayStack:
+    Type:  AWS::CloudFormation::Stack
+    DependsOn: SyntinelLambdaStack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref CoreApiGatewayTemplate ] ]
+      Parameters:
+        CoreLambdaCloudStackName: !GetAtt [ SyntinelLambdaStack, Outputs.StackName ]
+        SignalLambdaProcessorArn: ""
+        CueLambdaProcessorArn: ""
+        StatusLambdaProcessorArn: ""
+
+  SyntinelChannelSlackStack:
+    Type:  AWS::CloudFormation::Stack
+    Condition: ChannelSlackTemplateProvided
+    DependsOn: SyntinelApiGatewayStack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref ChannelSlackTemplate ] ]
+      Parameters:
+        CoreApiGatewayCloudStackName: !GetAtt [ SyntinelApiGatewayStack, Outputs.StackName ]
+        CoreLambdaCloudStackName: !GetAtt [ SyntinelLambdaStack, Outputs.StackName ]
+        CoreIamCloudStackName: !Ref IamCloudStackName
+        GlobalLambdaRole: !Ref GlobalLambdaRole
+        LocalLambdaRolePublisher: ""
+        LocalLambdaRoleSubscriber: ""
+
+  SyntinelChannelSlackCreated:
+    Type: AWS::CloudFormation::WaitConditionHandle
+    Condition: ChannelSlackTemplateProvided
+    DependsOn: SyntinelChannelSlackStack
+  SyntinelChannelSlackIgnored:
+    Type: AWS::CloudFormation::WaitConditionHandle
+  SyntinelChannelSlackWaitCondition:
+    Type: AWS::CloudFormation::WaitCondition
+    Properties:
+      Handle: !If [ ChannelSlackTemplateProvided, !Ref SyntinelChannelSlackCreated, !Ref SyntinelChannelSlackIgnored]
+      Timeout: "600"
+      Count: 0
+
+  SyntinelDeployStack:
+    Type:  AWS::CloudFormation::Stack
+    DependsOn: [ SyntinelApiGatewayStack, SyntinelChannelSlackWaitCondition]
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref CoreApiDeployTemplate ] ]
+      Parameters:
+        CoreApiGatewayCloudStackName: !GetAtt [ SyntinelApiGatewayStack, Outputs.StackName ]
+
+  SyntinelResolverEc2UtilsStack:
+    Type:  AWS::CloudFormation::Stack
+    Condition: ResolverEc2UtilsTemplateProvided
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref ResolverEc2UtilsTemplate ] ]
+      Parameters:
+        IamCloudStackName: !Ref IamCloudStackName
+        GlobalLambdaRole: ""
+        LocalLambdaRoleSetInstanceState: ""
+#        SyntinelCodeBucketName: !Ref S3BucketName    # TODO : Uncomment Me Once Completed, Delete Next Line.
+        SyntinelCodeBucketName: syntinel-temp         # TODO : Delete Me
+        SyntinelCodeBucketKey: !Join [ "", [ !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref LambdaCodeBucketKey ] ]
+        SetInstanceStateFunctionName: !Ref ResolverEc2UtilsSetInstanceFunctionName

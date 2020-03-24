@@ -12,13 +12,14 @@ namespace Syntinel.Aws
 {
     public class LambdaFunctions
     {
+        public LambdaConfig config = new LambdaConfig();
         public IDatabaseEngine db;
         public LambdaProcessor processor;
 
         public LambdaFunctions()
         {
-            db = new DynamoDbEngine();
-            processor = new LambdaProcessor(db);
+            db = new DynamoDbEngine(config.SignalsTable, config.ReportersTable);
+            processor = new LambdaProcessor(db, config);
         }
 
         public string Hello(string input, ILambdaLogger log)
@@ -97,7 +98,7 @@ namespace Syntinel.Aws
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(request));
-            Status status = Ec2Utils.SetInstanceState(request, LambdaProcessor.config.Region);
+            Status status = Ec2Utils.SetInstanceState(request, config.Region);
             processor.Logger.Info(JsonTools.Serialize(status));
             return status;
         }

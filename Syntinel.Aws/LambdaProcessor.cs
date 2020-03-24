@@ -11,11 +11,13 @@ namespace Syntinel.Aws
 {
     public class LambdaProcessor : Processor
     {
-        public static LambdaConfig config = new LambdaConfig();
-        public AmazonLambdaClient client = new AmazonLambdaClient(config.Region);
+        public LambdaConfig Config { get; internal set; } 
+        public AmazonLambdaClient Client { get; internal set; }
 
-        public LambdaProcessor(IDatabaseEngine engine, ILogger logger = null) : base (engine, logger)
+        public LambdaProcessor(IDatabaseEngine engine, LambdaConfig config, ILogger logger = null) : base (engine, logger)
         {
+            this.Config = config;
+            this.Client = new AmazonLambdaClient(Config.Region);
         }
 
         public override SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
@@ -30,7 +32,7 @@ namespace Syntinel.Aws
 
             try
             {
-                String lambdaName = $"syntinel-signal-publisher-{channel.Type}";
+                String lambdaName = $"{Config.ChannelPublisherPrefix}-{channel.Type}";
                 Logger.Info($"Sending Signal To {channel.Type} - {channel.Name} ({lambdaName})");
 
                 ChannelRequest request = new ChannelRequest
@@ -40,7 +42,7 @@ namespace Syntinel.Aws
                     Channel = channel
                 };
 
-                InvokeResponse response = AWSUtilities.CallLambdaMethod(client, lambdaName, JsonTools.Serialize(request));
+                InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
             } 
             catch (Exception e)
             {
@@ -53,9 +55,9 @@ namespace Syntinel.Aws
 
         public override void SendToResolver(Resolver resolver, ResolverRequest request)
         {
-            String lambdaName = $"syntinel-resolver-{resolver.Name}";
+            String lambdaName = $"{Config.ResolverPrefix}-{resolver.Name}";
             Logger.Info($"Sending Requst To {resolver.Name} ({lambdaName})");
-            InvokeResponse response = AWSUtilities.CallLambdaMethod(client, lambdaName, JsonTools.Serialize(request));
+            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
         }
     }
 }

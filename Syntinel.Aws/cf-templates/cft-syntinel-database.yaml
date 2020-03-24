@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates the necessary database objects for the Syntinel application.
+Parameters:
+  ReportersTableName:
+    Type: String
+    Default: syntinel-reporters
+    Description: The name for the DynamoDB table that contains information about the reporters (Who sent the signal).
+  SignalsTableName:
+    Type: String
+    Default: syntinel-signals
+    Description: The name for the DynamoDB table that contains the signal messages and any replies received.
+Resources: 
+  SyntinelReportersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref ReportersTableName
+      AttributeDefinitions:
+        - AttributeName: "_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "_id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+  SyntinelSignalsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref SignalsTableName
+      AttributeDefinitions:
+        - AttributeName: "_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "_id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+  ReportersTable:
+    Description: The name of the Reporters DynamoDb table.
+    Value: !Ref SyntinelReportersTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelReportersTable"
+  ReportersTableArn:
+    Description: The ARN of the Reporters DynamoDb table.
+    Value: !GetAtt
+        - SyntinelReportersTable
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelReportersTableArn"
+  SignalsTable:
+    Description: The name of the Signals DynamoDb table.
+    Value: !Ref SyntinelSignalsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelSignalsTable"
+  SignalsTableArn:
+    Description: The ARN of the Signals DynamoDb table.
+    Value: !GetAtt
+        - SyntinelSignalsTable
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelSignalsTableArn"

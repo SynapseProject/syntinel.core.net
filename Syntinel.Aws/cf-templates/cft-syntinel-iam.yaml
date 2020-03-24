@@ -1,0 +1,184 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates the necessary IAM roles and policies for Syntinel.
+Parameters:
+  SyntinelAllManagedPolicyName:
+    Type: String
+    Default: syntinel-all
+    Description: The name for the policy that grants access to all parts of the relay tier for Syntinel.
+  SyntinelLambdaRoleName:
+    Type: String
+    Default: syntinel-lambda-role
+    Description: The name for the role allowing lambda to work with API Gateway.
+  PolicyPermissionBoundry:
+    Type: String
+    Default: arn:aws:iam::286148036853:policy/WS-0096-pol_PlatformUserBoundary
+    Description: If a policy permission boundry is required, please enter the full arn here.
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "IAM Policies and Roles (Required)"
+      Parameters:
+      - SyntinelAllManagedPolicyName
+      - SyntinelLambdaRoleName
+    - Label:
+        default: "Role Permission Boundry (If Needed)"
+      Parameters:
+      - PolicyPermissionBoundry
+Conditions:
+    PolicyPermissionBoundryProvided : !Not [ !Equals [!Ref PolicyPermissionBoundry, ""] ] 
+Resources: 
+  SyntinelAllPolicy: 
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      ManagedPolicyName: !Ref SyntinelAllManagedPolicyName
+      Description: Combined policy that grants access to all parts of the relay tier for Syntinel.
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Action:
+          - application-autoscaling:DeleteScalingPolicy
+          - application-autoscaling:DeregisterScalableTarget
+          - application-autoscaling:DescribeScalableTargets
+          - application-autoscaling:DescribeScalingActivities
+          - application-autoscaling:DescribeScalingPolicies
+          - application-autoscaling:PutScalingPolicy
+          - application-autoscaling:RegisterScalableTarget
+          - cloudformation:DescribeChangeSet
+          - cloudformation:DescribeStackResources
+          - cloudformation:DescribeStacks
+          - cloudformation:GetTemplate
+          - cloudformation:ListStackResources
+          - cloudwatch:*
+          - cognito-identity:ListIdentityPools
+          - cognito-sync:GetCognitoEvents
+          - cognito-sync:SetCognitoEvents
+          - datapipeline:ActivatePipeline
+          - datapipeline:CreatePipeline
+          - datapipeline:DeletePipeline
+          - datapipeline:DescribeObjects
+          - datapipeline:DescribePipelines
+          - datapipeline:GetPipelineDefinition
+          - datapipeline:ListPipelines
+          - datapipeline:PutPipelineDefinition
+          - datapipeline:QueryObjects
+          - dynamodb:*
+          - dax:*
+          - ec2:DescribeSecurityGroups
+          - ec2:DescribeSubnets
+          - ec2:DescribeVpcs
+          - ec2:Start*
+          - ec2:Stop*
+          - events:*
+          - iam:GetPolicy
+          - iam:GetPolicyVersion
+          - iam:GetRole
+          - iam:GetRolePolicy
+          - iam:ListAttachedRolePolicies
+          - iam:ListRolePolicies
+          - iam:ListRoles
+          - iam:PassRole
+          - iot:AttachPrincipalPolicy
+          - iot:AttachThingPrincipal
+          - iot:CreateKeysAndCertificate
+          - iot:CreatePolicy
+          - iot:CreateThing
+          - iot:CreateTopicRule
+          - iot:DescribeEndpoint
+          - iot:GetTopicRule
+          - iot:ListPolicies
+          - iot:ListThings
+          - iot:ListTopicRules
+          - iot:ReplaceTopicRule
+          - kinesis:DescribeStream
+          - kinesis:ListStreams
+          - kinesis:PutRecord
+          - kms:ListAliases
+          - lambda:*
+          - logs:*
+          - s3:*
+          - ses:*
+          - sns:*
+          - sqs:*
+          - tag:GetResources
+          - xray:PutTelemetryRecords
+          - xray:PutTraceSegments
+          Effect: Allow
+          Resource: "*"
+        - Effect: Allow
+          Action:
+          - execute-api:Invoke
+          Resource: arn:aws:execute-api:*:*:*
+        - Action:
+          - iam:PassRole
+          Effect: Allow
+          Resource: "*"
+          Condition:
+            StringLike:
+              iam:PassedToService:
+              - application-autoscaling.amazonaws.com
+              - dax.amazonaws.com
+        - Effect: Allow
+          Action:
+          - iam:CreateServiceLinkedRole
+          Resource: "*"
+          Condition:
+            StringEquals:
+              iam:AWSServiceName:
+              - replication.dynamodb.amazonaws.com
+              - dax.amazonaws.com
+              - dynamodb.application-autoscaling.amazonaws.com
+        - Effect: Allow
+          Action:
+          - apigateway:*
+          Resource: arn:aws:apigateway:*::/*
+  SyntinelLambdaRole:
+    DependsOn: SyntinelAllPolicy
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: !Ref SyntinelLambdaRoleName
+      Description: Role to allow Api Gateway and Lambda to work together.
+      AssumeRolePolicyDocument: 
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+            - apigateway.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - !Ref SyntinelAllPolicy
+      PermissionsBoundary: !If [ PolicyPermissionBoundryProvided, !Ref PolicyPermissionBoundry, !Ref "AWS::NoValue" ]
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  LambdaRoleName:
+    Description: The Name id for the SyntinelAllRole created.
+    Value: !Ref SyntinelLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleName"
+
+  LambdaRoleArn:
+    Description: The ARN of the SyntinelAllRole.
+    Value: !GetAtt
+        - SyntinelLambdaRole
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleArn"
+
+  LambdaRoleId:
+    Description: The Role Id of the SyntinelAllRole.
+    Value: !GetAtt
+        - SyntinelLambdaRole
+        - RoleId
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleId"
+
+  AllPolicyArn:
+    Description: The ARN of the SyntinelAllPolicy created.
+    Value: !Ref SyntinelAllPolicy
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelAllPolicyArn"

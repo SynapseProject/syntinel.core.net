@@ -15,6 +15,8 @@ namespace Syntinel.Aws
     public class DynamoDbEngine : IDatabaseEngine
     {
         private const int defaultTimeout = 30000;
+        private string signalsTable = "syntinel-signals";
+        private string reportersTable = "syntinel-reporters";
 
         private AmazonDynamoDBClient client;
 
@@ -23,13 +25,20 @@ namespace Syntinel.Aws
             client = new AmazonDynamoDBClient();
         }
 
+        public DynamoDbEngine(string signals, string reporters)
+        {
+            client = new AmazonDynamoDBClient();
+            this.signalsTable = signals;
+            this.reportersTable = reporters;
+        }
+
         private string GetTableName(System.Type t)
         {
             string tableName = "";
             if (t == typeof(SignalDbRecord))
-                tableName = "syntinel-signals";
+                tableName = signalsTable;
             else if (t == typeof(ReporterDbRecord))
-                tableName = "syntinel-reporters";
+                tableName = reportersTable;
 
             return tableName;
         }

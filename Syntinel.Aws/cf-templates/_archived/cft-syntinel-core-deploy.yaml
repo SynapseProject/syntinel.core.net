@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates and deploys the API gateway objects for running the Syntinel application.
+
+Parameters:
+  ApiGatewayResourceId:
+    Type: String
+    Description: (Required) The Resource Id for the API Gateway Deployment.
+  ApiGatewayStageName:
+    Type: String
+    Default: ***** Your Bucket Name Here *****
+    Description: (Required) The stage name for the API Gateway Deployment.
+
+Resources:
+  SyntinelDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGatewayResourceId
+      StageName: !Ref ApiGatewayStageName
+
+#  SyntinelStage:
+#    Type: AWS::ApiGateway::Stage
+#    Properties:
+#      StageName: !Ref ApiGatewayStageName
+#      Description: Production deployment of the Syntinel application.
+#      RestApiId: !Ref ApiGatewayResourceId
+#      DeploymentId: !Ref SyntinelDeployment
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  ApiGatewayDeployStageName:
+    Description: The stage name of the API Gateway Deployment.
+    Value: !Ref ApiGatewayStageName
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiGatewayDeployStageName"

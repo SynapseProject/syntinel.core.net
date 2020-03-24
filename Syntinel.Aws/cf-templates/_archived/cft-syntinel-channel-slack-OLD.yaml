@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates and deploys Lambdas and ApiGateway objects needed to use the Slack subscriber.
+
+Parameters:
+  CoreIamCloudStackName:
+    Type: String
+    Default: syntinel-core-iam
+    Description: (Required) The name for the cloudformation stack used to create the IAM policies and roles.
+
+  CoreApiGatewayCloudStackName:
+    Type: String
+    Default: syntinel-core-apigateway
+    Description: (Required) The name for the cloudformation stack used to create the core API Gateway objects.
+
+  CoreLambdaCloudStackName:
+    Type: String
+    Default: syntinel-core-lambda
+    Description: (Required) The name for the cloudformation stack used to create the core lambda objects.
+
+  GlobalLambdaRole:
+    Type: String
+    Default: "syntinel-lambda-role"
+    Description: (Conditional) The name of the role to be used with ALL the channel specific lambda functions.  This overrides any roles from the IAM CloudFormation stack.
+
+  LocalLambdaRolePublisher:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the signal publisher lambda functions.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+
+  LocalLambdaRoleSubscriber:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the cue receiver lambda functions.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+
+Conditions:
+    GlobalIamRoleProvided : !Not [ !Equals [!Ref GlobalLambdaRole, ""] ]
+    LocalLambdaRolePublisherProvided : !Not [ !Equals [!Ref LocalLambdaRolePublisher, ""] ]
+    LocalLambdaRoleSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSubscriber, ""] ]
+
+
+Resources:
+  # Lambda Functions
+  SyntinelSignalPublisherSlack:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-ChannelPublisherFunctionNamePrefix" } }, "-slack" ] ]
+      Description: Send outbound message to a slack subscriber.
+      Role: !If [ LocalLambdaRolePublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRolePublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreIamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketName" } }
+        S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketObjectKey" } }
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherSlack
+      Runtime: dotnetcore2.1
+      Timeout: 30
+  
+  SyntinelCueSubscriberSlack:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-ChannelSubscriberFunctionNamePrefix" } }, "-slack" ] ]
+      Description: Receive inbound cue messages from a slack subscriber.
+      Role: !If [ LocalLambdaRoleSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreIamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketName" } }
+        S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketObjectKey" } }
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherSlack
+      Runtime: dotnetcore2.1
+      Timeout: 30
+  
+
+  # Api Gateway 
+  SlackResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreApiGatewayCloudStackName}-SyntinelApiGateway" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreApiGatewayCloudStackName}-SyntinelSubscriberCueResourceId" } }
+      PathPart: slack
+
+  HelloWorldMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreApiGatewayCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref SlackResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: "{'statusCode': 200}"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "{\"message\": \"Hello From Syntinel - Slack.\"}"
+            text/html: Hello From Syntinel - Slack.
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  SlackCueMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreApiGatewayCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref SlackResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Join ["", ["arn:aws:apigateway:", {"Ref": "AWS::Region"}, ":lambda:path/2015-03-31/functions/", {"Fn::GetAtt": ["SyntinelCueSubscriberSlack", "Arn"]}, "/invocations"]]
+        RequestTemplates:
+          application/x-www-form-urlencoded: |
+            ##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+            ##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload
+            #set($allParams = $input.params())
+            {
+            "body-json" : $input.json('$'),
+            "params" : {
+            #foreach($type in $allParams.keySet())
+                #set($params = $allParams.get($type))
+            "$type" : {
+                #foreach($paramName in $params.keySet())
+                "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+                    #if($foreach.hasNext),#end
+                #end
+            }
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "stage-variables" : {
+            #foreach($key in $stageVariables.keySet())
+            "$key" : "$util.escapeJavaScript($stageVariables.get($key))"
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "context" : {
+                "account-id" : "$context.identity.accountId",
+                "api-id" : "$context.apiId",
+                "api-key" : "$context.identity.apiKey",
+                "authorizer-principal-id" : "$context.authorizer.principalId",
+                "caller" : "$context.identity.caller",
+                "cognito-authentication-provider" : "$context.identity.cognitoAuthenticationProvider",
+                "cognito-authentication-type" : "$context.identity.cognitoAuthenticationType",
+                "cognito-identity-id" : "$context.identity.cognitoIdentityId",
+                "cognito-identity-pool-id" : "$context.identity.cognitoIdentityPoolId",
+                "http-method" : "$context.httpMethod",
+                "stage" : "$context.stage",
+                "source-ip" : "$context.identity.sourceIp",
+                "user" : "$context.identity.user",
+                "user-agent" : "$context.identity.userAgent",
+                "user-arn" : "$context.identity.userArn",
+                "request-id" : "$context.requestId",
+                "resource-id" : "$context.resourceId",
+                "resource-path" : "$context.resourcePath"
+                }
+            }
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ""
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
