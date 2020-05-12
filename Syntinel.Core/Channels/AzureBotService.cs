@@ -11,7 +11,7 @@ namespace Syntinel.Core
         public string BaseUrl = @"https://directline.botframework.com/v3/directline/conversations";
 
 
-        public AzureBotServiceMessage Publish(string id, ChannelDbType channel, Signal signal)
+        public AzureBotServiceMessage Publish(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {

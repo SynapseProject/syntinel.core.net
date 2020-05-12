@@ -17,6 +17,8 @@ namespace Syntinel.Aws
         private const int defaultTimeout = 30000;
         private string signalsTable = "syntinel-signals";
         private string reportersTable = "syntinel-reporters";
+        private string channelsTable = "syntinel-channels";
+        private string routerTable = "syntinel-router";
 
         private AmazonDynamoDBClient client;
 
@@ -25,11 +27,13 @@ namespace Syntinel.Aws
             client = new AmazonDynamoDBClient();
         }
 
-        public DynamoDbEngine(string signals, string reporters)
+        public DynamoDbEngine(string signals, string reporters, string channels, string router)
         {
             client = new AmazonDynamoDBClient();
             this.signalsTable = signals;
             this.reportersTable = reporters;
+            this.channelsTable = channels;
+            this.routerTable = router;
         }
 
         private string GetTableName(System.Type t)
@@ -39,6 +43,10 @@ namespace Syntinel.Aws
                 tableName = signalsTable;
             else if (t == typeof(ReporterDbRecord))
                 tableName = reportersTable;
+            else if (t == typeof(ChannelDbRecord))
+                tableName = channelsTable;
+            else if (t == typeof(RouterDbRecord))
+                tableName = routerTable;
 
             return tableName;
         }
@@ -51,11 +59,23 @@ namespace Syntinel.Aws
 
         public T Get<T>(string id)
         {
+            string[] ids = new string[1];
+            ids[0] = id;
+            return Get<T>(ids);
+        }
+
+        public T Get<T>(string[] ids)
+        {
             T dbRecord = default(T);
 
             string tableName = GetTableName(typeof(T));
             Table table = Table.LoadTable(client, tableName);
-            Task<Document> task = table.GetItemAsync(id);
+            Task<Document> task;
+            if (ids.Length <= 1)
+                task = table.GetItemAsync(ids[0]);
+            else
+                task = table.GetItemAsync(ids[0], ids[1]);
+
             task.Wait(defaultTimeout);
             Document doc = task.Result;
 
@@ -125,6 +145,13 @@ namespace Syntinel.Aws
 
         public void Delete<T>(string id, bool failIfMissing = false)
         {
+            string[] ids = new string[1];
+            ids[0] = id;
+            Delete<T>(ids, failIfMissing);
+        }
+
+        public void Delete<T>(string[] ids, bool failIfMissing = false)
+        {
             string tableName = GetTableName(typeof(T));
             Table table = Table.LoadTable(client, tableName);
 
@@ -144,7 +171,12 @@ namespace Syntinel.Aws
                 }
             }
 
-            Task<Document> task = table.DeleteItemAsync(id, config);
+            Task<Document> task;
+            if (ids.Length <= 1)
+                task = table.DeleteItemAsync(ids[0], config);
+            else
+                task = table.DeleteItemAsync(ids[0], ids[1], config);
+
             task.Wait(defaultTimeout);
 
         }

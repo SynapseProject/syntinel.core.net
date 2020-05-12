@@ -22,8 +22,12 @@ namespace Syntinel.Core
             reply.Time = DateTime.UtcNow;
             reply.StatusCode = StatusCode.Success;
 
-            string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "000000000");
+            string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
+
+            // TODO : Check For Router Record
+
+            reporter.LoadChannels(DbEngine);
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
             reply.Id = signalDb.Id;
@@ -35,7 +39,7 @@ namespace Syntinel.Core
 
             int channelCount = 0;
             int errorCount = 0;
-            foreach (ChannelDbType channel in reporter.Channels)
+            foreach (ChannelDbRecord channel in reporter.Channels)
             {
                 channelCount++;
                 SignalStatus status = SendToChannel(channel, signalDb);
@@ -58,7 +62,7 @@ namespace Syntinel.Core
             return reply;
         }
 
-        public virtual SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
+        public virtual SignalStatus SendToChannel(ChannelDbRecord channel, SignalDbRecord signal)
         {
             SignalStatus status = new SignalStatus
             {

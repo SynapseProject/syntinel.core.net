@@ -7,5 +7,9 @@ namespace Syntinel.Core
         T Create<T>(T record, bool failIfExists = false);
         T Update<T>(T record, bool failIfMissing = false);
         void Delete<T>(string id, bool failIfMissing = false);
+
+        // Get/Delete Record By A Complex Primary Key
+        T Get<T>(string[] id);
+        void Delete<T>(string[] id, bool failIfMissing = false);
     }
 }

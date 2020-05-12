@@ -15,6 +15,6 @@ namespace Syntinel.Core
         public Signal Signal { get; set; }
 
         [JsonProperty(PropertyName = "channel")]
-        public ChannelDbType Channel { get; set; }
+        public ChannelDbRecord Channel { get; set; }
     }
 }

@@ -20,14 +20,14 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Resolvers/Ec2Utils-SetInstanceState.json", FileMode.Open));
-            string objectString = reader.ReadToEnd();
+            DynamoDbEngine db = new DynamoDbEngine();
+            ReporterDbRecord rec = db.Get<ReporterDbRecord>("_default");
 
-            ResolverRequest request = JsonTools.Deserialize<ResolverRequest>(objectString);
-            Console.WriteLine(JsonTools.Serialize(request, true));
+            string[] ids = { "wu2-p3-0392", "cloudenvironment3" };
+            RouterDbRecord router = db.Get<RouterDbRecord>(ids);
 
-            Status status = Ec2Utils.SetInstanceState(request, RegionEndpoint.USEast1);
-            Console.WriteLine(JsonTools.Serialize(status, true));
+            rec.LoadChannels(db, router);
+            Console.WriteLine($"{rec.Id} : {rec.Description}");
         }
     }
 }
