@@ -23,5 +23,9 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "config")]
         public Dictionary<object, object> Config { get; set; }
+
+        [JsonProperty(PropertyName = "isActive")]
+        public bool IsActive { get; set; } = true;
+
     }
 }

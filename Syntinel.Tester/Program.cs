@@ -21,13 +21,17 @@ namespace Syntinel.Tester
         public static void Main(string[] args)
         {
             DynamoDbEngine db = new DynamoDbEngine();
-            ReporterDbRecord rec = db.Get<ReporterDbRecord>("_default");
+            Processor processor = new Processor(db);
+            ILogger logger = new ConsoleLogger();
 
-            string[] ids = { "wu2-p3-0392", "cloudenvironment3" };
-            RouterDbRecord router = db.Get<RouterDbRecord>(ids);
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
+            string fileStr = reader.ReadToEnd();
+            Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 
-            rec.LoadChannels(db, router);
-            Console.WriteLine($"{rec.Id} : {rec.Description}");
+            SignalReply reply = processor.ProcessSignal(signal);
+            Console.WriteLine($"Status : {reply.StatusCode}");
+            foreach (SignalStatus status in reply.Results)
+                Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
         }
     }
 }

@@ -6,6 +6,7 @@ namespace Syntinel.Core
     {
         Success,
         SuccessWithErrors,
-        Failure
+        Failure,
+        NotActive
     }
 }

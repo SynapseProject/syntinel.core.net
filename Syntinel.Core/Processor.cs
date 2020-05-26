@@ -24,10 +24,8 @@ namespace Syntinel.Core
 
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
-
-            // TODO : Check For Router Record
-
-            reporter.LoadChannels(DbEngine);
+            RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType);
+            reporter.LoadChannels(DbEngine, router);
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
             reply.Id = signalDb.Id;
@@ -57,6 +55,7 @@ namespace Syntinel.Core
             }
 
             signalDb.Status = StatusType.Sent;
+            signalDb.AddTrace(reply);
             DbEngine.Update(signalDb);
 
             return reply;
@@ -69,20 +68,26 @@ namespace Syntinel.Core
                 Channel = channel.Name,
                 Code = StatusCode.Success,
                 Type = channel.Type,
-                Message = "Dummy Message"
+                Message = "Success"
             };
 
             try
             {
-                if (channel.Type == "slack")
+                if (channel.IsActive == false)
+                {
+                    status.Code = StatusCode.NotActive;
+                    status.Message = "Channel Is Disabled.";
+                }
+                else if (channel.Type == "slack")
                 {
                     SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
-                    //Logger.Info(JsonTools.Serialize(message));
+                    //status.Message = JsonTools.Serialize(message);
                 }
                 else if (channel.Type == "azure-bot-service")
                 {
                     AzureBotService abs = new AzureBotService();
-                    abs.Publish(signal.Id, channel, signal.Signal);
+                    AzureBotServiceMessage message = abs.Publish(signal.Id, channel, signal.Signal);
+                    //status.Message = JsonTools.Serialize(message);
                 }
                 else
                     throw new Exception($"Unknown Channel Type [{channel.Type}].");
@@ -187,11 +192,7 @@ namespace Syntinel.Core
                 action.IsValid = status.IsValidReply;
             }
 
-            string traceId = Utils.GenerateId() + "_STATUS";
-            if (signal.Trace == null)
-                signal.Trace = new System.Collections.Generic.Dictionary<string, object>();
-            signal.Trace.Add(traceId, status);
-
+            signal.AddTrace(status);
             DbEngine.Update(signal, true);
 
             return reply;
