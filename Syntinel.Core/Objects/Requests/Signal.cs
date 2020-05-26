@@ -11,6 +11,12 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "reporterId")]
         public string ReporterId { get; set; }
 
+        [JsonProperty(PropertyName = "routerId")]
+        public string RouterId { get; set; }
+
+        [JsonProperty(PropertyName = "routerType")]
+        public string RouterType { get; set; }
+
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 

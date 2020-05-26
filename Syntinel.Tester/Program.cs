@@ -20,14 +20,18 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Resolvers/Ec2Utils-SetInstanceState.json", FileMode.Open));
-            string objectString = reader.ReadToEnd();
+            DynamoDbEngine db = new DynamoDbEngine();
+            Processor processor = new Processor(db);
+            ILogger logger = new ConsoleLogger();
 
-            ResolverRequest request = JsonTools.Deserialize<ResolverRequest>(objectString);
-            Console.WriteLine(JsonTools.Serialize(request, true));
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
+            string fileStr = reader.ReadToEnd();
+            Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 
-            Status status = Ec2Utils.SetInstanceState(request, RegionEndpoint.USEast1);
-            Console.WriteLine(JsonTools.Serialize(status, true));
+            SignalReply reply = processor.ProcessSignal(signal);
+            Console.WriteLine($"Status : {reply.StatusCode}");
+            foreach (SignalStatus status in reply.Results)
+                Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
         }
     }
 }

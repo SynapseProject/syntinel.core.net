@@ -9,7 +9,7 @@ namespace Syntinel.Core
 {
     public class Slack
     {
-        public static SlackMessage Publish(string id, ChannelDbType channel, Signal signal)
+        public static SlackMessage Publish(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {

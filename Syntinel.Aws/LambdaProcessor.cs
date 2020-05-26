@@ -20,7 +20,7 @@ namespace Syntinel.Aws
             this.Client = new AmazonLambdaClient(Config.Region);
         }
 
-        public override SignalStatus SendToChannel(ChannelDbType channel, SignalDbRecord signal)
+        public override SignalStatus SendToChannel(ChannelDbRecord channel, SignalDbRecord signal)
         {
             SignalStatus status = new SignalStatus
             {

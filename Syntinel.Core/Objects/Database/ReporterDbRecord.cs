@@ -18,25 +18,23 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "description")]
         public string Description { get; set; }
 
-        [JsonProperty(PropertyName = "channels")]
-        public ChannelDbType[] Channels { get; set; }
-    }
+        [JsonProperty(PropertyName = "defaultChannels")]
+        public string[] DefaultChannels { get; set; } = { "_default" };
 
-    public class ChannelDbType
-    {
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
+        public List<ChannelDbRecord> Channels { get; set; } = new List<ChannelDbRecord>();
 
-        [JsonProperty(PropertyName = "description")]
-        public string Description { get; set; }
+        [JsonProperty(PropertyName = "isActive")]
+        public bool IsActive { get; set; } = true;
 
-        [JsonProperty(PropertyName = "type")]
-        public string Type { get; set; }
 
-        [JsonProperty(PropertyName = "target")]
-        public string Target { get; set; }
+        public void LoadChannels(IDatabaseEngine db, RouterDbRecord router = null)
+        {
+            string[] channelSource = DefaultChannels;
+            if (router != null)
+                channelSource = router.Channels;
 
-        [JsonProperty(PropertyName = "config")]
-        public Dictionary<object,object> Config { get; set; }
+            foreach (string channelId in channelSource)
+                Channels.Add(db.Get<ChannelDbRecord>(channelId));
+        }
     }
 }

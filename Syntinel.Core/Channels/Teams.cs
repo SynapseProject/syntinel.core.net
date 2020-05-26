@@ -10,7 +10,7 @@ namespace Syntinel.Core
 {
     public class Teams
     {
-        public static TeamsMessage Publish(string id, ChannelDbType channel, Signal signal)
+        public static TeamsMessage Publish(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {
