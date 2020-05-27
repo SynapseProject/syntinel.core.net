@@ -21,17 +21,30 @@ namespace Syntinel.Tester
         public static void Main(string[] args)
         {
             DynamoDbEngine db = new DynamoDbEngine();
-            Processor processor = new Processor(db);
-            ILogger logger = new ConsoleLogger();
+            //Processor processor = new Processor(db);
+            //ILogger logger = new ConsoleLogger();
 
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
-            string fileStr = reader.ReadToEnd();
-            Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
+            //string fileStr = reader.ReadToEnd();
+            //Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 
-            SignalReply reply = processor.ProcessSignal(signal);
-            Console.WriteLine($"Status : {reply.StatusCode}");
-            foreach (SignalStatus status in reply.Results)
-                Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
+            //SignalReply reply = processor.ProcessSignal(signal);
+            //Console.WriteLine($"Status : {reply.StatusCode}");
+            //foreach (SignalStatus status in reply.Results)
+            //    Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
+
+            string[] ids = { "ec2", "cue" };
+            TemplateDbRecord template = db.Get<TemplateDbRecord>(ids);
+
+            Console.WriteLine("=================================");
+//            Console.WriteLine(JsonTools.Serialize(template, true));
+
+            template.SetParameter("name", "Hello World");
+            template.SetParameter("instance", "i-8888888888");
+
+            CueOption cue = JsonTools.Convert<CueOption>(template.Template);
+            Console.WriteLine("---------------------------------");
+            Console.WriteLine(JsonTools.Serialize(cue, true));
         }
     }
 }

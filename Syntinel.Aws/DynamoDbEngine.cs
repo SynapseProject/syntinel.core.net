@@ -19,6 +19,7 @@ namespace Syntinel.Aws
         private string reportersTable = "syntinel-reporters";
         private string channelsTable = "syntinel-channels";
         private string routerTable = "syntinel-router";
+        private string templateTable = "syntinel-templates";
 
         private AmazonDynamoDBClient client;
 
@@ -27,13 +28,14 @@ namespace Syntinel.Aws
             client = new AmazonDynamoDBClient();
         }
 
-        public DynamoDbEngine(string signals, string reporters, string channels, string router)
+        public DynamoDbEngine(string signals, string reporters, string channels, string router, string templates)
         {
             client = new AmazonDynamoDBClient();
             this.signalsTable = signals;
             this.reportersTable = reporters;
             this.channelsTable = channels;
             this.routerTable = router;
+            this.templateTable = templates;
         }
 
         private string GetTableName(System.Type t)
@@ -47,6 +49,8 @@ namespace Syntinel.Aws
                 tableName = channelsTable;
             else if (t == typeof(RouterDbRecord))
                 tableName = routerTable;
+            else if (t == typeof(TemplateDbRecord))
+                tableName = templateTable;
 
             return tableName;
         }
