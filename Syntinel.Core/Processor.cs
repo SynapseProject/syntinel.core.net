@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Syntinel.Core
 {
@@ -26,6 +27,21 @@ namespace Syntinel.Core
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
             RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType);
             reporter.LoadChannels(DbEngine, router);
+
+            // Retrieve Any CueOption Templates Specified
+            List<string> keys = new List<string>(signal.Cues.Keys);
+            foreach (string key in keys)
+            {
+                CueOption option = signal.Cues[key];
+                if (!String.IsNullOrWhiteSpace(option.TemplateId))
+                {
+                    string[] ids = { option.TemplateId, typeof(CueOption).Name };
+                    TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
+                    template.SetParameters(option.Arguments);
+                    option = JsonTools.Convert<CueOption>(template.Template);
+                    signal.Cues[key] = option;
+                }
+            }
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
             reply.Id = signalDb.Id;

@@ -55,6 +55,12 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "defaultAction")]
         public string DefaultAction { get; set; }
+
+        [JsonProperty(PropertyName = "template")]
+        public string TemplateId { get; set; }      // If Present, CueOption Retrieved From Syntinel Templates Table.
+
+        [JsonProperty(PropertyName = "arguments")]
+        public Dictionary<string,object> Arguments { get; set; }
     }
 
     public class Resolver
