@@ -19,5 +19,11 @@ namespace Syntinel.Core
                 format = Formatting.Indented;
             return JsonConvert.SerializeObject(obj, format);
         }
+
+        public static T Convert<T>(object obj)
+        {
+            string objectStr = Serialize(obj);
+            return Deserialize<T> (objectStr);
+        }
     }
 }

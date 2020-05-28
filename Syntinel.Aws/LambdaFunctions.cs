@@ -18,7 +18,7 @@ namespace Syntinel.Aws
 
         public LambdaFunctions()
         {
-            db = new DynamoDbEngine(config.SignalsTable, config.ReportersTable, config.ChannelsTable, config.RouterTable);
+            db = new DynamoDbEngine(config.SignalsTable, config.ReportersTable, config.ChannelsTable, config.RouterTable, config.TemplatesTable);
             processor = new LambdaProcessor(db, config);
         }
 

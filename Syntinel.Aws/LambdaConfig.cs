@@ -19,6 +19,7 @@ namespace Syntinel.Aws
         public string ReportersTable { get; set; }
         public string ChannelsTable { get; set; }
         public string RouterTable { get; set; }
+        public string TemplatesTable { get; set; }
 
         // Lambda Configurations
         public string ChannelPublisherPrefix { get; set; }
@@ -37,6 +38,7 @@ namespace Syntinel.Aws
             ReportersTable = GetVariable("Syntinel_ReportersTableName", "syntinel-reporters");
             ChannelsTable = GetVariable("Syntinel_ChannelsTableName", "syntinel-channels");
             RouterTable = GetVariable("Syntinel_RouterTableName", "syntinel-router");
+            TemplatesTable = GetVariable("Syntinel_TemplatesTableName", "syntinel-templates");
 
             ChannelPublisherPrefix = GetVariable("Syntinel_ChannelPublisherPrefix", "syntinel-signal-publisher");
             ChannelSubscriberPrefix = GetVariable("Syntinel_ChannelSubscriberPrefix", "syntinel-cue-subscriber");
