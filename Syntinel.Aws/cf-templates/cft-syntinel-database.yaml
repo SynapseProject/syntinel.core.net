@@ -9,6 +9,18 @@ Parameters:
     Type: String
     Default: syntinel-signals
     Description: The name for the DynamoDB table that contains the signal messages and any replies received.
+  ChannelsTableName:
+    Type: String
+    Default: syntinel-channels
+    Description: The name for the DynamoDB table that contains the channel descriptions and configuration.
+  RouterTableName:
+    Type: String
+    Default: syntinel-router
+    Description: The name for the DynamoDB table that contains the mapping between reporters and channels based on provided routing criteria.
+  TemplatesTableName:
+    Type: String
+    Default: syntinel-templates
+    Description: The name for the DynamoDB table that contains templates that can be accessed and used in the Syntinel flow.
 Resources: 
   SyntinelReportersTable:
     Type: AWS::DynamoDB::Table
@@ -36,10 +48,58 @@ Resources:
       ProvisionedThroughput: 
         ReadCapacityUnits: "5"
         WriteCapacityUnits: "5"
+  SyntinelChannelsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref ChannelsTableName
+      AttributeDefinitions:
+        - AttributeName: "_id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "_id"
+          KeyType: "HASH"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+  SyntinelRouterTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref RouterTableName
+      AttributeDefinitions:
+        - AttributeName: "_id"
+          AttributeType: "S"
+        - AttributeName: "_type"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "_id"
+          KeyType: "HASH"
+        - AttributeName: "_type"
+          KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+  SyntinelTemplatesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TemplatesTableName
+      AttributeDefinitions:
+        - AttributeName: "_id"
+          AttributeType: "S"
+        - AttributeName: "_type"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "_id"
+          KeyType: "HASH"
+        - AttributeName: "_type"
+          KeyType: "RANGE"
+      ProvisionedThroughput: 
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
 Outputs:
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName
+
   ReportersTable:
     Description: The name of the Reporters DynamoDb table.
     Value: !Ref SyntinelReportersTable
@@ -52,6 +112,7 @@ Outputs:
         - Arn
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelReportersTableArn"
+
   SignalsTable:
     Description: The name of the Signals DynamoDb table.
     Value: !Ref SyntinelSignalsTable
@@ -64,3 +125,43 @@ Outputs:
         - Arn
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelSignalsTableArn"
+
+  ChannelsTable:
+    Description: The name of the Channels DynamoDb table.
+    Value: !Ref SyntinelChannelsTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelChannelsTable"
+  ChannelsTableArn:
+    Description: The ARN of the Signals DynamoDb table.
+    Value: !GetAtt
+        - SyntinelChannelsTable
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelChannelsTableArn"
+
+  RouterTable:
+    Description: The name of the Router DynamoDb table.
+    Value: !Ref SyntinelRouterTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelRouterTable"
+  RouterTableArn:
+    Description: The ARN of the Signals DynamoDb table.
+    Value: !GetAtt
+        - SyntinelRouterTable
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelRouterTableArn"
+
+  TemplatesTable:
+    Description: The name of the Templates DynamoDb table.
+    Value: !Ref SyntinelTemplatesTable
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelTemplatesTable"
+  RouterTableArn:
+    Description: The ARN of the Signals DynamoDb table.
+    Value: !GetAtt
+        - SyntinelTemplatesTable
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelTemplatesTableArn"
+

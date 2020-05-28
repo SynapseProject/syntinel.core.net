@@ -22,7 +22,7 @@ Parameters:
   ##### Lambda Function DotNet Core Code Locations
   SyntinelCodeBucketName:
     Type: String
-    Default: ***** Your Bucket Name Here *****
+    Default: -----YourBucketNameHere-----
     Description: The S3 bucket where the DotNet Core code is located.
   SyntinelCodeBucketKey:
     Type: String
@@ -47,11 +47,23 @@ Parameters:
   ReportersTableName:
     Type: String
     Default: syntinel-reporters
-    Description: The prefix name for the functions that send signal messages out to channels.  (Example = syntinel-signal-publisher-slack)
+    Description: The name for the Reporters DynamoDb Table.
   SignalsTableName:
     Type: String
     Default: syntinel-signals
-    Description: The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
+    Description: The name for the Signals DynanoDb Table.
+  ChannelsTableName:
+    Type: String
+    Default: syntinel-channels
+    Description: The name for the Channels DynanoDb Table.
+  RouterTableName:
+    Type: String
+    Default: syntinel-router
+    Description: The name for the Router DynanoDb Table.
+  TemplatesTableName:
+    Type: String
+    Default: syntinel-templates
+    Description: The name for the Templates DynanoDb Table.
 
   ##### Channel Specific Lambda Function Prefixes
   ChannelPublisherPrefix:
@@ -95,6 +107,9 @@ Metadata:
       Parameters:
       - SignalsTableName
       - ReportersTableName
+      - ChannelsTableName
+      - RouterTableName
+      - TemplatesTableName
     - Label:
         default: "Channel Specific Lambda Function Prefixes (Required)"
       Parameters:
@@ -121,9 +136,12 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          Syntinel_DefaultReporterId: "000000000"
+          Syntinel_DefaultReporterId: "_default"
           Syntinel_SignalsTableName: !Ref SignalsTableName
           Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix
@@ -142,9 +160,12 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          Syntinel_DefaultReporterId: "000000000"
+          Syntinel_DefaultReporterId: "_default"
           Syntinel_SignalsTableName: !Ref SignalsTableName
           Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix
@@ -163,9 +184,12 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          Syntinel_DefaultReporterId: "000000000"
+          Syntinel_DefaultReporterId: "_default"
           Syntinel_SignalsTableName: !Ref SignalsTableName
           Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix

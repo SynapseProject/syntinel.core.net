@@ -5,7 +5,7 @@ Parameters:
   # S3 Locations
   S3BucketName:
     Type: String
-    Default: ***** Your Bucket Name Here *****
+    Default: -----YourBucketNameHere-----
     Description: (Required) The name for the S3 bucket that contains the cloudformation tempates and lambda code.
   S3BucketPrefix:
     Type: String
@@ -80,7 +80,7 @@ Parameters:
   #Api Gateway
   CoreApiGatewayStageName:
     Type: String
-    Default: ***** Your Bucket Name Here *****
+    Default: syntinel
     Description: (Required) The stage name for the API Gateway Deployment.
   DeployToStage:
     Type: String
@@ -145,6 +145,9 @@ Resources:
         ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
         ReportersTableName: { "Fn::ImportValue" : { "Fn::Sub" : "${DatabaseCloudStackName}-SyntinelReportersTable" } }
         SignalsTableName: { "Fn::ImportValue" : { "Fn::Sub" : "${DatabaseCloudStackName}-SyntinelSignalsTable" } }
+        ChannelsTableName: { "Fn::ImportValue" : { "Fn::Sub" : "${DatabaseCloudStackName}-SyntinelChannelsTable" } }
+        RouterTableName: { "Fn::ImportValue" : { "Fn::Sub" : "${DatabaseCloudStackName}-SyntinelRouterTable" } }
+        TemplatesTableName: { "Fn::ImportValue" : { "Fn::Sub" : "${DatabaseCloudStackName}-SyntinelTemplatesTable" } }
         ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
         ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
 
