@@ -26,6 +26,5 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "isActive")]
         public bool IsActive { get; set; } = true;
-
     }
 }

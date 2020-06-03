@@ -7,16 +7,16 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public class TeamsMessage
+    public class AdaptiveCard
     {
         [JsonProperty(PropertyName = "type")]
         public string Type { get; set; } = "AdaptiveCard";
 
         [JsonProperty(PropertyName = "body")]
-        public List<TeamsBody> Body { get; set; } = new List<TeamsBody>();
+        public List<AdaptiveCardBody> Body { get; set; } = new List<AdaptiveCardBody>();
 
         [JsonProperty(PropertyName = "actions")]
-        public List<TeamsAction> Actions { get; set; } = new List<TeamsAction>();
+        public List<AdaptiveCardAction> Actions { get; set; } = new List<AdaptiveCardAction>();
 
         [JsonProperty(PropertyName = "$schema")]
         public string Schema { get; set; } = "http://adaptivecards.io/schemas/adaptive-card.json";
@@ -29,7 +29,7 @@ namespace Syntinel.Core
 
     }
 
-    public class TeamsBody
+    public class AdaptiveCardBody
     {
         [JsonProperty(PropertyName = "type")]
         public string Type { get; set; } = "Container";
@@ -38,10 +38,10 @@ namespace Syntinel.Core
         public bool Separator { get; set; } = false;
 
         [JsonProperty(PropertyName = "items")]
-        public List<TeamsBodyItems> Items { get; set; } = new List<TeamsBodyItems>();
+        public List<AdaptiveCardBodyItems> Items { get; set; } = new List<AdaptiveCardBodyItems>();
     }
 
-    public class TeamsBodyItems
+    public class AdaptiveCardBodyItems
     {
         [JsonProperty(PropertyName = "type")]
         public string Type { get; set; }
@@ -62,10 +62,10 @@ namespace Syntinel.Core
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "choices", NullValueHandling = NullValueHandling.Ignore)]
-        public List<TeamsBodyChoice> Choices { get; set; } = new List<TeamsBodyChoice>();
+        public List<AdaptiveCardBodyChoice> Choices { get; set; } = new List<AdaptiveCardBodyChoice>();
     }
 
-    public class TeamsBodyChoice
+    public class AdaptiveCardBodyChoice
     {
         [JsonProperty(PropertyName = "title")]
         public string Title { get; set; }
@@ -74,7 +74,7 @@ namespace Syntinel.Core
         public string Value { get; set; }
     }
 
-    public class TeamsAction
+    public class AdaptiveCardAction
     {
         [JsonProperty(PropertyName = "type")]
         public string Type { get; set; }
@@ -86,13 +86,13 @@ namespace Syntinel.Core
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "data", NullValueHandling = NullValueHandling.Ignore)]
-        public TeamsActionData Data { get; set; }
+        public AdaptiveCardActionData Data { get; set; }
 
         [JsonProperty(PropertyName = "card", NullValueHandling = NullValueHandling.Ignore)]
-        public TeamsCard Card { get; set; }
+        public AdaptiveCard Card { get; set; }
     }
 
-    public class TeamsActionData
+    public class AdaptiveCardActionData
     {
         [JsonProperty(PropertyName = "callback_id")]
         public string CallbackId { get; set; }
@@ -101,15 +101,15 @@ namespace Syntinel.Core
         public string Action { get; set; }
     }
 
-    public class TeamsCard
-    {
-        [JsonProperty(PropertyName = "type")]
-        public string Type { get; set; } = "AdaptiveCard";
+    //public class TeamsCard
+    //{
+    //    [JsonProperty(PropertyName = "type")]
+    //    public string Type { get; set; } = "AdaptiveCard";
 
-        [JsonProperty(PropertyName = "body")]
-        public List<TeamsBody> Body { get; set; } = new List<TeamsBody>();
+    //    [JsonProperty(PropertyName = "body")]
+    //    public List<AdaptiveCardBody> Body { get; set; } = new List<AdaptiveCardBody>();
 
-        [JsonProperty(PropertyName = "actions")]
-        public List<TeamsAction> Actions { get; set; } = new List<TeamsAction>();
-    }
+    //    [JsonProperty(PropertyName = "actions")]
+    //    public List<AdaptiveCardAction> Actions { get; set; } = new List<AdaptiveCardAction>();
+    //}
 }

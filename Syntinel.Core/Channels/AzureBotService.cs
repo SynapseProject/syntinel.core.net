@@ -37,7 +37,7 @@ namespace Syntinel.Core
             if (channelType?.ToLower() == "slack")
                 message.Value = Slack.CreateSlackMessage(request);
             else if (channelType?.ToLower() == "msteams")
-                message.Value = Teams.CreateTeamsMessage(request);
+                message.Value = Teams.CreateAdaptiveCardMessage(request);
             else
                 throw new Exception($"Unknown ChannelType [{channelType}].");
 

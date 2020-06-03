@@ -10,7 +10,7 @@ namespace Syntinel.Core
 {
     public class Teams
     {
-        public static TeamsMessage Publish(string id, ChannelDbRecord channel, Signal signal)
+        public static AdaptiveCard Publish(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {
@@ -22,16 +22,16 @@ namespace Syntinel.Core
             return Publish(request);
         }
 
-        public static TeamsMessage Publish(ChannelRequest request)
+        public static AdaptiveCard Publish(ChannelRequest request)
         {
-            TeamsMessage message = CreateTeamsMessage(request);
+            AdaptiveCard message = CreateAdaptiveCardMessage(request);
             Signal signal = request.Signal;
 
 
             return message;
         }
 
-        public static Cue CreateCue(Dictionary<string,object> reply)
+        public static Cue CreateCue(Dictionary<string, object> reply)
         {
             Cue cue = new Cue();
 
@@ -58,20 +58,20 @@ namespace Syntinel.Core
             return cue;
         }
 
-        public static TeamsMessage CreateTeamsMessage(ChannelRequest request)
+        public static AdaptiveCard CreateAdaptiveCardMessage(ChannelRequest request)
         {
-            TeamsMessage message = new TeamsMessage();
-            message.Body.Add(new TeamsBody());
+            AdaptiveCard message = new AdaptiveCard();
+            message.Body.Add(new AdaptiveCardBody());
             Signal signal = request.Signal;
 
-            TeamsBodyItems header = new TeamsBodyItems();
+            AdaptiveCardBodyItems header = new AdaptiveCardBodyItems();
             header.Weight = "Bolder";
             header.Type = "TextBlock";
             header.Size = "Medium";
             header.Text = signal.Name;
             message.Body[0].Items.Add(header);
 
-            TeamsBodyItems description = new TeamsBodyItems();
+            AdaptiveCardBodyItems description = new AdaptiveCardBodyItems();
             description.Text = signal.Description;
             description.Type = "TextBlock";
             description.Size = "Medium";
@@ -80,20 +80,20 @@ namespace Syntinel.Core
             int totalCues = signal.Cues.Keys.Count;
             foreach (string cue in signal.Cues.Keys)
             {
-                TeamsCard card = CreateTeamsCard(request.Id, cue, signal.Cues[cue]);
+                AdaptiveCard card = CreateAdaptiveCard(request.Id, cue, signal.Cues[cue]);
                 if (totalCues == 1)
                 {
                     // Create Single Cue in Main Body of Message
-                    foreach (TeamsBody body in card.Body)
+                    foreach (AdaptiveCardBody body in card.Body)
                         message.Body.Add(body);
 
-                    foreach (TeamsAction action in card.Actions)
+                    foreach (AdaptiveCardAction action in card.Actions)
                         message.Actions.Add(action);
                 }
                 else
                 {
                     // Create Each Cue as an Action.ShowCard Button
-                    TeamsAction action = new TeamsAction();
+                    AdaptiveCardAction action = new AdaptiveCardAction();
                     action.Type = "Action.ShowCard";
                     action.Title = cue;
                     action.Card = card;
@@ -104,13 +104,13 @@ namespace Syntinel.Core
             return message;
         }
 
-        public static TeamsCard CreateTeamsCard(string signalId, string cueId, CueOption cue)
+        public static AdaptiveCard CreateAdaptiveCard(string signalId, string cueId, CueOption cue)
         {
-            TeamsCard card = new TeamsCard();
-            card.Body.Add(new TeamsBody());
+            AdaptiveCard card = new AdaptiveCard();
+            card.Body.Add(new AdaptiveCardBody());
             card.Body[0].Separator = true;
 
-            TeamsBodyItems header = new TeamsBodyItems();
+            AdaptiveCardBodyItems header = new AdaptiveCardBodyItems();
             header.Weight = "Bolder";
             header.Type = "TextBlock";
             header.Size = "Medium";
@@ -118,7 +118,7 @@ namespace Syntinel.Core
             header.Wrap = true;
             card.Body[0].Items.Add(header);
 
-            TeamsBodyItems description = new TeamsBodyItems();
+            AdaptiveCardBodyItems description = new AdaptiveCardBodyItems();
             description.Text = cue.Description;
             description.Type = "TextBlock";
             description.Size = "Medium";
@@ -127,13 +127,13 @@ namespace Syntinel.Core
 
             foreach (SignalVariable action in cue.Actions)
             {
-                TeamsAction myAction = new TeamsAction();
+                AdaptiveCardAction myAction = new AdaptiveCardAction();
                 if (action.Type == VariableType.button)
                 {
                     myAction.Type = "Action.Submit";
                     myAction.Id = "action";
                     myAction.Title = action.Name;
-                    myAction.Data = new TeamsActionData();
+                    myAction.Data = new AdaptiveCardActionData();
                     myAction.Data.CallbackId = $"{signalId}|{cueId}";
                     myAction.Data.Action = action.DefaultValue;
 
@@ -144,28 +144,28 @@ namespace Syntinel.Core
                     myAction.Type = "Action.ShowCard";
                     myAction.Title = action.Name;
 
-                    myAction.Card = new TeamsCard();
+                    myAction.Card = new AdaptiveCard();
                     myAction.Card.Type = "AdaptiveCard";
 
-                    TeamsAction choiceAction = new TeamsAction();
+                    AdaptiveCardAction choiceAction = new AdaptiveCardAction();
                     choiceAction.Type = "Action.Submit";
                     choiceAction.Title = "Submit";
-                    choiceAction.Data = new TeamsActionData();
+                    choiceAction.Data = new AdaptiveCardActionData();
                     choiceAction.Data.CallbackId = $"{signalId}|{cueId}";
                     myAction.Card.Actions.Add(choiceAction);
 
-                    TeamsBody myBody = new TeamsBody();
+                    AdaptiveCardBody myBody = new AdaptiveCardBody();
                     myBody.Type = "Container";
                     myBody.Separator = true;
-                    myBody.Items = new System.Collections.Generic.List<TeamsBodyItems>();
+                    myBody.Items = new System.Collections.Generic.List<AdaptiveCardBodyItems>();
 
-                    TeamsBodyItems choiceItems = new TeamsBodyItems();
+                    AdaptiveCardBodyItems choiceItems = new AdaptiveCardBodyItems();
                     choiceItems.Type = "Input.ChoiceSet";
                     choiceItems.Id = "action";
 
                     foreach (string key in action.Values.Keys)
                     {
-                        TeamsBodyChoice teamsChoice = new TeamsBodyChoice();
+                        AdaptiveCardBodyChoice teamsChoice = new AdaptiveCardBodyChoice();
                         teamsChoice.Title = action.Values[key];
                         teamsChoice.Value = key;
                         choiceItems.Choices.Add(teamsChoice);
