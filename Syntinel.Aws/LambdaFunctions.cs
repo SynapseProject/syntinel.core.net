@@ -64,6 +64,15 @@ namespace Syntinel.Aws
             return reply;
         }
 
+        public MessageCard SignalPublisherTeams(ChannelRequest request, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(request));
+            MessageCard reply = Teams.Publish(request);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
+        }
+
         public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);

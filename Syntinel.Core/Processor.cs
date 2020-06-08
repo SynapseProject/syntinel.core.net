@@ -99,6 +99,11 @@ namespace Syntinel.Core
                     SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
+                else if (channel.Type == "teams")
+                {
+                    MessageCard message = Teams.Publish(signal.Id, channel, signal.Signal);
+                    //status.Message = JsonTools.Serialize(message);
+                }
                 else if (channel.Type == "azure-bot-service")
                 {
                     AzureBotService abs = new AzureBotService();

@@ -10,7 +10,7 @@ namespace Syntinel.Core
 {
     public class Teams
     {
-        public static AdaptiveCard Publish(string id, ChannelDbRecord channel, Signal signal)
+        public static MessageCard Publish(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {
@@ -22,13 +22,27 @@ namespace Syntinel.Core
             return Publish(request);
         }
 
-        public static AdaptiveCard Publish(ChannelRequest request)
+        public static MessageCard Publish(ChannelRequest request)
         {
-            AdaptiveCard message = CreateAdaptiveCardMessage(request);
+            MessageCard message = CreateMessageCardMessage(request);
+            string json = JsonTools.Serialize(message, true);
+            Console.WriteLine(json);
             Signal signal = request.Signal;
 
+            String webHook = request?.Channel?.Target;
+            if (webHook != null)
+            {
+                SendMessage(webHook, message);
+                return message;
+            }
+            else
+                throw new Exception("No Target Information Was Provided.");
+        }
 
-            return message;
+        public static void SendMessage(string webHook, MessageCard message)
+        {
+            string body = JsonTools.Serialize(message);
+            Utils.PostMessage(webHook, body);
         }
 
         public static Cue CreateCue(Dictionary<string, object> reply)
@@ -57,6 +71,96 @@ namespace Syntinel.Core
 
             return cue;
         }
+
+        // ******************************************************************
+        // *** MessageCard Methods
+        // ******************************************************************
+
+        public static MessageCard CreateMessageCardMessage(ChannelRequest request)
+        {
+            MessageCard message = new MessageCard();
+            Signal signal = request.Signal;
+
+            message.Title = signal.Name;
+            message.Text = signal.Description;
+
+            int totalCues = signal.Cues.Count;
+            foreach (string key in signal.Cues.Keys)
+            {
+                CueOption cue = signal.Cues[key];
+                MessageCardSection section = new MessageCardSection
+                {
+                    Title = cue.Name,
+                    Text = cue.Description
+                };
+                message.Sections.Add(section);
+
+                foreach (SignalVariable cueAction in cue.Actions)
+                {
+                    MessageCardAction action = CreateMessageCardAction(cueAction, request.Channel?.Config?["actionUrl"]?.ToString());
+                    if (action != null)
+                        message.PotentialActions.Add(action);
+                }
+            }
+
+            return message;
+        }
+
+        public static MessageCardAction CreateMessageCardAction(SignalVariable action, string actionUrl)
+        {
+            MessageCardAction potnetialAction = new MessageCardAction();
+            potnetialAction.Name = action.Name;
+
+            if (action.Type == VariableType.choice)
+            {
+                potnetialAction.Type = MessageCardActionType.ActionCard;
+                potnetialAction.Inputs = new List<MessageCardInput>();
+                potnetialAction.Actions = new List<MessageCardAction>();
+
+                MessageCardInput input = new MessageCardInput();
+                input.Type = MessageCardInputType.MultichoiceInput;
+                input.Id = "action";        // TODO: Get This From Signal Message Directly
+                input.Title = action.Description;
+                input.Value = action.DefaultValue;
+                input.Style = MessageCardInputStyle.expanded;       // Expanded = Radio Buttons.  Remove for Drop Down"
+                input.Choices = new List<MessageCardInputChoice>();
+                foreach (string key in action.Values.Keys)
+                {
+                    MessageCardInputChoice messageChoice = new MessageCardInputChoice()
+                    {
+                        Name = action.Values[key],
+                        Value = key
+                    };
+                    input.Choices.Add(messageChoice);
+                }
+
+                potnetialAction.Inputs.Add(input);
+
+                MessageCardAction submit = new MessageCardAction()
+                {
+                    Type = MessageCardActionType.HttpPOST,
+                    Name = "Submit",
+                    Target = actionUrl,
+                    Body = "{ \"action\": \"{{action.value}}\" }"
+                };
+                potnetialAction.Actions.Add(submit);
+            }
+            else if (action.Type == VariableType.button)
+            {
+                potnetialAction.Type = MessageCardActionType.HttpPOST;
+                potnetialAction.Target = actionUrl;
+                potnetialAction.Body = "{ \"action\": \"" + action.DefaultValue + "\"}";
+            }
+            else
+                // Unknown or Unsupported Action Type.  Ignore It.
+                potnetialAction = null;
+
+            return potnetialAction;
+        }
+
+        // ******************************************************************
+        // *** Adaptive Card Methods (Not Supported By Teams As Of 4-JUN-2020)
+        // ******************************************************************
 
         public static AdaptiveCard CreateAdaptiveCardMessage(ChannelRequest request)
         {
