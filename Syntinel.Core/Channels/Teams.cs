@@ -26,7 +26,6 @@ namespace Syntinel.Core
         {
             MessageCard message = CreateMessageCardMessage(request);
             string json = JsonTools.Serialize(message, true);
-            Console.WriteLine(json);
             Signal signal = request.Signal;
 
             String webHook = request?.Channel?.Target;
@@ -46,6 +45,31 @@ namespace Syntinel.Core
         }
 
         public static Cue CreateCue(Dictionary<string, object> reply)
+        {
+            Cue cue = new Cue();
+
+            string signalId = (string)reply["signalId"];
+            string cueId = (string)reply["cueId"];
+
+            cue.Id = signalId;
+            cue.CueId = cueId;
+
+            foreach (string key in reply.Keys)
+            {
+                if (key != "signalId" && key != "cueId")
+                {
+                    CueVariable variable = new CueVariable();
+                    variable.Name = key;
+                    // TODO: Might have to split value by semicolons for multi-value field types.
+                    variable.Values.Add((string)reply[key]);
+                    cue.Variables.Add(variable);
+                }
+            }
+
+            return cue;
+        }
+
+        public static Cue CreateCueOld(Dictionary<string, object> reply)
         {
             Cue cue = new Cue();
 
@@ -97,7 +121,7 @@ namespace Syntinel.Core
 
                 foreach (SignalVariable cueAction in cue.Actions)
                 {
-                    MessageCardAction action = CreateMessageCardAction(cueAction, request.Channel?.Config?["actionUrl"]?.ToString());
+                    MessageCardAction action = CreateMessageCardAction(request, key, cueAction);
                     if (action != null)
                         message.PotentialActions.Add(action);
                 }
@@ -106,10 +130,16 @@ namespace Syntinel.Core
             return message;
         }
 
-        public static MessageCardAction CreateMessageCardAction(SignalVariable action, string actionUrl)
+        public static MessageCardAction CreateMessageCardAction(ChannelRequest request, string cueId, SignalVariable action)
         {
+            string actionUrl = request.Channel?.Config?["actionUrl"]?.ToString();
+
             MessageCardAction potnetialAction = new MessageCardAction();
             potnetialAction.Name = action.Name;
+
+            Dictionary<string, object> actionBody = new Dictionary<string, object>();
+            actionBody.Add("signalId", request.Id);
+            actionBody.Add("cueId", cueId);
 
             if (action.Type == VariableType.choice)
             {
@@ -123,6 +153,7 @@ namespace Syntinel.Core
                 input.Title = action.Description;
                 input.Value = action.DefaultValue;
                 input.Style = MessageCardInputStyle.expanded;       // Expanded = Radio Buttons.  Remove for Drop Down"
+                input.IsMultiSelect = false;
                 input.Choices = new List<MessageCardInputChoice>();
                 foreach (string key in action.Values.Keys)
                 {
@@ -136,20 +167,23 @@ namespace Syntinel.Core
 
                 potnetialAction.Inputs.Add(input);
 
+                actionBody.Add("action", "{{action.value}}");
                 MessageCardAction submit = new MessageCardAction()
                 {
                     Type = MessageCardActionType.HttpPOST,
                     Name = "Submit",
                     Target = actionUrl,
-                    Body = "{ \"action\": \"{{action.value}}\" }"
+                    Body = JsonTools.Serialize(actionBody)
                 };
                 potnetialAction.Actions.Add(submit);
             }
             else if (action.Type == VariableType.button)
             {
+                actionBody.Add("action", action.DefaultValue);
+
                 potnetialAction.Type = MessageCardActionType.HttpPOST;
                 potnetialAction.Target = actionUrl;
-                potnetialAction.Body = "{ \"action\": \"" + action.DefaultValue + "\"}";
+                potnetialAction.Body = JsonTools.Serialize(actionBody);
             }
             else
                 // Unknown or Unsupported Action Type.  Ignore It.

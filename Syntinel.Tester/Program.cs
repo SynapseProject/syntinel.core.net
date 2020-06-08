@@ -32,6 +32,14 @@ namespace Syntinel.Tester
             Console.WriteLine($"Status : {reply.StatusCode}");
             foreach (SignalStatus status in reply.Results)
                 Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
+
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
+            //string fileStr = reader.ReadToEnd();
+            //Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
+
+            //Cue cue = Teams.CreateCue(reply);
+            //CueReply cueReply = processor.ProcessCue(cue);
+            //Console.WriteLine(JsonTools.Serialize(cueReply));
         }
     }
 }

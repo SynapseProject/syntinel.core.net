@@ -103,6 +103,12 @@ namespace Syntinel.Aws
             return cueReply;
         }
 
+        public CueReply CueSubscriberAzureBotService(Dictionary<string, object> reply, ILambdaContext ctx)
+        {
+            //TODO : Implement Me
+            return null;
+        }
+
         public Status Ec2UtilsSetInstanceState(ResolverRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);

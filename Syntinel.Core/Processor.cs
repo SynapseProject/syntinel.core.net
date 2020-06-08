@@ -192,7 +192,7 @@ namespace Syntinel.Core
 
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
-            Console.WriteLine($"Resolver [{resolver.Name}] Not Implemented : {JsonTools.Serialize(request)}");
+            Logger.Error($"Resolver [{resolver.Name}] Not Implemented : {JsonTools.Serialize(request)}");
         }
 
         public StatusReply ProcessStatus(Status status)

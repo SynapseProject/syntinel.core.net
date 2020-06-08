@@ -32,7 +32,6 @@ namespace Syntinel.Core
                 JObject jObj = JObject.Parse(JsonTools.Serialize(Template));
                 foreach (TemplateVariableType variable in Parameters[key])
                 {
-                    Console.WriteLine($"{variable.Path} - {typeof(object)}");
                     JToken newToken = JToken.FromObject(value);
                     JToken token = jObj.SelectToken(variable.Path);
 
