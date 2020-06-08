@@ -24,7 +24,7 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db);
             ILogger logger = new ConsoleLogger();
 
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/Syntinel.Design/samples/Api/Signal-Request.json", FileMode.Open));
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal.json", FileMode.Open));
             string fileStr = reader.ReadToEnd();
             Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 
@@ -32,6 +32,14 @@ namespace Syntinel.Tester
             Console.WriteLine($"Status : {reply.StatusCode}");
             foreach (SignalStatus status in reply.Results)
                 Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
+
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
+            //string fileStr = reader.ReadToEnd();
+            //Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
+
+            //Cue cue = Teams.CreateCue(reply);
+            //CueReply cueReply = processor.ProcessCue(cue);
+            //Console.WriteLine(JsonTools.Serialize(cueReply));
         }
     }
 }

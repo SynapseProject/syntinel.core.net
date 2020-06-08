@@ -64,6 +64,15 @@ namespace Syntinel.Aws
             return reply;
         }
 
+        public MessageCard SignalPublisherTeams(ChannelRequest request, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info(JsonTools.Serialize(request));
+            MessageCard reply = Teams.Publish(request);
+            processor.Logger.Info(JsonTools.Serialize(reply));
+            return reply;
+        }
+
         public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
@@ -92,6 +101,12 @@ namespace Syntinel.Aws
             CueReply cueReply = processor.ProcessCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
             return cueReply;
+        }
+
+        public CueReply CueSubscriberAzureBotService(Dictionary<string, object> reply, ILambdaContext ctx)
+        {
+            //TODO : Implement Me
+            return null;
         }
 
         public Status Ec2UtilsSetInstanceState(ResolverRequest request, ILambdaContext ctx)

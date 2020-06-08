@@ -1,0 +1,50 @@
+﻿{
+  "name": "Utilization",
+  "description": "EC2 Utilization Montior",
+  "maxReplies": 1,
+  "reporterId": "_default",
+  "routerId": "MyId",
+  "routerType": "MyIdType",
+  "cues": {
+    "ec2": {
+      "name": "EC2 Usage",
+      "description": "Server [i-888888888888] has been running for 7 days.  Would you like to take action against it?",
+      "resolver": {
+        "name": "ec2utils",
+        "config": {
+          "instances": [ "i-888888888888" ]
+        }
+      },
+      "actions": [
+        {
+          "name": "Perform Action",
+          "id": "action",
+          "description": "Choose action to take against EC2 instances.",
+          "type": "choice",
+          "values": {
+            "stop": "Stop Instance",
+            "terminate": "Terminate Instance",
+            "reboot": "Reboot Instance",
+            "hibernate": "Stop and Hibernate Instance"
+          },
+          "defaultValue": "stop"
+        },
+        {
+          "name": "Ignore Alert",
+          "description": "Ignore this alert.",
+          "type": "button",
+          "defaultValue": "ignore"
+        },
+        {
+          "name": "Disable Alert",
+          "description": "Disable this alert.",
+          "type": "button",
+          "defaultValue": "disable"
+        }
+      ],
+      "defaultAction": "Perform Action"
+    }
+  },
+  "defaultCue": "ec2-template",
+  "defaultCueTimeout": 4320
+}

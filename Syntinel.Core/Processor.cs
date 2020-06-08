@@ -99,6 +99,11 @@ namespace Syntinel.Core
                     SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
+                else if (channel.Type == "teams")
+                {
+                    MessageCard message = Teams.Publish(signal.Id, channel, signal.Signal);
+                    //status.Message = JsonTools.Serialize(message);
+                }
                 else if (channel.Type == "azure-bot-service")
                 {
                     AzureBotService abs = new AzureBotService();
@@ -187,7 +192,7 @@ namespace Syntinel.Core
 
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
-            Console.WriteLine($"Resolver [{resolver.Name}] Not Implemented : {JsonTools.Serialize(request)}");
+            Logger.Error($"Resolver [{resolver.Name}] Not Implemented : {JsonTools.Serialize(request)}");
         }
 
         public StatusReply ProcessStatus(Status status)
