@@ -1,0 +1,163 @@
+﻿AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates and deploys Lambdas and ApiGateway objects needed to use the Teams subscriber.
+
+Parameters:
+  CoreCloudStackName:
+    Type: String
+    Default: syntinel-core
+    Description: (Required) The name for the cloudformation stack used to create the IAM policies and roles.
+
+  DeployToStage:
+    Type: String
+    Default: true
+    AllowedValues: [true, false]
+    Description: (Required) Deploy API Gateway Methods to Stage Defined in the CoreCloudStack.
+
+  GlobalLambdaRole:
+    Type: String
+    Description: (Conditional) The name of the role to be used with ALL the channel specific lambda functions.  This overrides any roles from the IAM CloudFormation stack.
+
+  LocalLambdaRolePublisher:
+    Type: String
+    Description: (Conditional) The name of the role to be used only with the signal publisher lambda functions.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+
+  LocalLambdaRoleSubscriber:
+    Type: String
+    Description: (Conditional) The name of the role to be used only with the cue receiver lambda functions.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "REQUIRED INPUT"
+      Parameters:
+      - CoreCloudStackName
+      - DeployToStage
+    - Label:
+        default: "ADVANCED CONFIGURATION: Lambda Roles.  (Role heirarchy is Local overrides Global overrides IamCloudStack.)"
+      Parameters:
+      - GlobalLambdaRole
+      - LocalLambdaRolePublisher
+      - LocalLambdaRoleSubscriber
+
+Conditions:
+  GlobalIamRoleProvided : !Not [ !Equals [!Ref GlobalLambdaRole, ""] ]
+  LocalLambdaRolePublisherProvided : !Not [ !Equals [!Ref LocalLambdaRolePublisher, ""] ]
+  LocalLambdaRoleSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSubscriber, ""] ]
+  DeployApi: !Equals [true, !Ref DeployToStage]
+
+Resources:
+  # Lambda Functions
+  SyntinelSignalPublisherTeams:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ChannelPublisherFunctionNamePrefix" } }, "-teams" ] ]
+      Description: Send outbound message to a teams subscriber.
+      Role: !If [ LocalLambdaRolePublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRolePublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketNameLambda" } }
+        S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketObjectKeyLambda" } }
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherTeams
+      Runtime: dotnetcore2.1
+      Timeout: 30
+  
+  SyntinelCueSubscriberTeams:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ChannelSubscriberFunctionNamePrefix" } }, "-teams" ] ]
+      Description: Receive inbound cue messages from a slack subscriber.
+      Role: !If [ LocalLambdaRoleSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketNameLambda" } }
+        S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketObjectKeyLambda" } }
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::CueSubscriberTeams
+      Runtime: dotnetcore2.1
+      Timeout: 30
+  
+
+  # Api Gateway 
+  TeamsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayResourceId" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-SubscriberCueResourceId" } }
+      PathPart: teams
+
+  HelloWorldMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayResourceId" } }
+      ResourceId: !Ref TeamsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: "{'statusCode': 200}"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "{\"message\": \"Hello From Syntinel - Teams.\"}"
+            text/html: Hello From Syntinel - Teams.
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  TeamsCueMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayResourceId" } }
+      ResourceId: !Ref TeamsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Join ["", ["arn:aws:apigateway:", {"Ref": "AWS::Region"}, ":lambda:path/2015-03-31/functions/", {"Fn::GetAtt": ["SyntinelCueSubscriberTeams", "Arn"]}, "/invocations"]]
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ""
+          ResponseParameters:
+            method.response.header.CARD-ACTION-STATUS: "integration.response.body"
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: "Empty"
+        ResponseParameters:
+          method.response.header.CARD-ACTION-STATUS: true
+
+  # Grant ApiGateway Permission To Call The Lambda Function
+  SyntinelCueSubscriberTeamsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: { "Fn::GetAtt": [ "SyntinelCueSubscriberTeams", "Arn" ]}
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayResourceId" } }, "/*/*/*" ] ] }            
+
+  SyntinelDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: DeployApi
+    DependsOn: [ HelloWorldMethod, TeamsCueMethod, SyntinelCueSubscriberTeamsPermission ]
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayResourceId" } }
+      StageName: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-ApiGatewayDeployStageName" } }
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  InvokeUrl:
+    Description: The invocation URL of the deployment.
+    Value: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-InvokeUrl" } }
+    Export:
+      Name: !Sub "${AWS::StackName}-InvokeUrl"
+
+  HelloUrl:
+    Description: The URL of the "hello" function.  Used to test a successful deployment.
+    Value: !Join ["", [ { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-InvokeUrl" } }, "/cue/teams" ] ]
+    Export:
+      Name: !Sub "${AWS::StackName}-HelloUrl"
