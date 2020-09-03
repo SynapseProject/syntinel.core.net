@@ -58,7 +58,7 @@ Resources:
         S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketNameLambda" } }
         S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketObjectKeyLambda" } }
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherTeams
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
   
   SyntinelCueSubscriberTeams:
@@ -71,7 +71,7 @@ Resources:
         S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketNameLambda" } }
         S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-S3BucketObjectKeyLambda" } }
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::CueSubscriberTeams
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
   
 

@@ -48,7 +48,7 @@ Resources:
         S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketName" } }
         S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketObjectKey" } }
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherSlack
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
   
   SyntinelCueSubscriberSlack:
@@ -61,7 +61,7 @@ Resources:
         S3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketName" } }
         S3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${CoreLambdaCloudStackName}-S3BucketObjectKey" } }
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherSlack
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
   
 

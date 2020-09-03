@@ -132,7 +132,7 @@ Resources:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessSignal
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
       Environment:
         Variables:
@@ -156,7 +156,7 @@ Resources:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessCue
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
       Environment:
         Variables:
@@ -180,7 +180,7 @@ Resources:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
       Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessStatus
-      Runtime: dotnetcore2.1
+      Runtime: dotnetcore3.1
       Timeout: 30
       Environment:
         Variables:
