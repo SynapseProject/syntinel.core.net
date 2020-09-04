@@ -18,6 +18,7 @@ namespace Syntinel.Core
 
         public SignalReply ProcessSignal(Signal signal)
         {
+            bool isActionable = false;
             SignalReply reply = new SignalReply();
             reply.StatusCode = StatusCode.Success;
             reply.Time = DateTime.UtcNow;
@@ -41,6 +42,8 @@ namespace Syntinel.Core
                     option = JsonTools.Convert<CueOption>(template.Template);
                     signal.Cues[key] = option;
                 }
+                if (option.Actions.Count > 0)
+                    isActionable = true;
             }
 
             SignalDbRecord signalDb = CreateSignalDbRecord();
@@ -79,7 +82,10 @@ namespace Syntinel.Core
                     reply.StatusCode = StatusCode.SuccessWithErrors;
             }
 
-            signalDb.Status = StatusType.Sent;
+            if (isActionable)
+                signalDb.Status = StatusType.Sent;
+            else
+                signalDb.Status = StatusType.Completed;
             signalDb.AddTrace(reply);
             DbEngine.Update(signalDb);
 

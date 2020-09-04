@@ -97,6 +97,10 @@ namespace Syntinel.Core
             String webHook = request?.Channel?.Target;
 
             string mainTitle = $"{signal.Name} : {signal.Description}";
+            if (String.IsNullOrEmpty(signal.Name))
+                mainTitle = signal.Description;
+            else if (String.IsNullOrEmpty(signal.Description))
+                mainTitle = signal.Name;
             message.Text = mainTitle;
 
             foreach (string key in signal.Cues.Keys)
@@ -114,6 +118,10 @@ namespace Syntinel.Core
             SlackAttachment attachment = new SlackAttachment();
 
             string cueTitle = $"{cue.Name} : {cue.Description}";
+            if (String.IsNullOrEmpty(cue.Name))
+                cueTitle = cue.Description;
+            else if (String.IsNullOrEmpty(cue.Description))
+                cueTitle = cue.Name;
             attachment.Text = cueTitle;
             attachment.CallbackId = $"{signalId}|{cueId}";
 

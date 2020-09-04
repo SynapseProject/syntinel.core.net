@@ -105,8 +105,8 @@ namespace Syntinel.Core
             MessageCard message = new MessageCard();
             Signal signal = request.Signal;
 
-            message.Title = signal.Name;
-            message.Text = signal.Description;
+            message.Title = String.IsNullOrEmpty(signal.Name) ? " " : signal.Name;
+            message.Text = String.IsNullOrEmpty(signal.Description) ? " " : signal.Description;
 
             int totalCues = signal.Cues.Count;
             foreach (string key in signal.Cues.Keys)
@@ -202,18 +202,24 @@ namespace Syntinel.Core
             message.Body.Add(new AdaptiveCardBody());
             Signal signal = request.Signal;
 
-            AdaptiveCardBodyItems header = new AdaptiveCardBodyItems();
-            header.Weight = "Bolder";
-            header.Type = "TextBlock";
-            header.Size = "Medium";
-            header.Text = signal.Name;
-            message.Body[0].Items.Add(header);
+            if (!String.IsNullOrEmpty(signal.Name))
+            {
+                AdaptiveCardBodyItems header = new AdaptiveCardBodyItems();
+                header.Weight = "Bolder";
+                header.Type = "TextBlock";
+                header.Size = "Medium";
+                header.Text = signal.Name;
+                message.Body[0].Items.Add(header);
+            }
 
-            AdaptiveCardBodyItems description = new AdaptiveCardBodyItems();
-            description.Text = signal.Description;
-            description.Type = "TextBlock";
-            description.Size = "Medium";
-            message.Body[0].Items.Add(description);
+            if (!String.IsNullOrEmpty(signal.Description))
+            {
+                AdaptiveCardBodyItems description = new AdaptiveCardBodyItems();
+                description.Text = signal.Description;
+                description.Type = "TextBlock";
+                description.Size = "Medium";
+                message.Body[0].Items.Add(description);
+            }
 
             int totalCues = signal.Cues.Keys.Count;
             foreach (string cue in signal.Cues.Keys)

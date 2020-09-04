@@ -1,0 +1,16 @@
+﻿{
+  "name": "Syntinel",
+  "description": "Alert",
+  "reporterId": "_default",
+  "routerId": "MyId",
+  "routerType": "MyIdType",
+  "cues": {
+    "alert": {
+      "template": "alert",
+      "arguments": {
+        "title": "",
+        "body": "Cue Body"
+      }
+    }
+  }
+}
