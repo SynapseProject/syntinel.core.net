@@ -30,20 +30,23 @@ namespace Syntinel.Core
             reporter.LoadChannels(DbEngine, router);
 
             // Retrieve Any CueOption Templates Specified
-            List<string> keys = new List<string>(signal.Cues.Keys);
-            foreach (string key in keys)
+            if (signal.Cues != null)
             {
-                CueOption option = signal.Cues[key];
-                if (!String.IsNullOrWhiteSpace(option.TemplateId))
+                List<string> keys = new List<string>(signal.Cues.Keys);
+                foreach (string key in keys)
                 {
-                    string[] ids = { option.TemplateId, typeof(CueOption).Name };
-                    TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                    template.SetParameters(option.Arguments);
-                    option = JsonTools.Convert<CueOption>(template.Template);
-                    signal.Cues[key] = option;
+                    CueOption option = signal.Cues[key];
+                    if (!String.IsNullOrWhiteSpace(option.TemplateId))
+                    {
+                        string[] ids = { option.TemplateId, typeof(CueOption).Name };
+                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
+                        template.SetParameters(option.Arguments);
+                        option = JsonTools.Convert<CueOption>(template.Template);
+                        signal.Cues[key] = option;
+                    }
+                    if (option.Actions.Count > 0)
+                        isActionable = true;
                 }
-                if (option.Actions.Count > 0)
-                    isActionable = true;
             }
 
             SignalDbRecord signalDb = CreateSignalDbRecord();

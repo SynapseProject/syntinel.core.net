@@ -108,22 +108,25 @@ namespace Syntinel.Core
             message.Title = String.IsNullOrEmpty(signal.Name) ? " " : signal.Name;
             message.Text = String.IsNullOrEmpty(signal.Description) ? " " : signal.Description;
 
-            int totalCues = signal.Cues.Count;
-            foreach (string key in signal.Cues.Keys)
+            if (signal.Cues != null)
             {
-                CueOption cue = signal.Cues[key];
-                MessageCardSection section = new MessageCardSection
+                int totalCues = signal.Cues.Count;
+                foreach (string key in signal.Cues.Keys)
                 {
-                    Title = cue.Name,
-                    Text = cue.Description
-                };
-                message.Sections.Add(section);
+                    CueOption cue = signal.Cues[key];
+                    MessageCardSection section = new MessageCardSection
+                    {
+                        Title = cue.Name,
+                        Text = cue.Description
+                    };
+                    message.Sections.Add(section);
 
-                foreach (SignalVariable cueAction in cue.Actions)
-                {
-                    MessageCardAction action = CreateMessageCardAction(request, key, cueAction);
-                    if (action != null)
-                        message.PotentialActions.Add(action);
+                    foreach (SignalVariable cueAction in cue.Actions)
+                    {
+                        MessageCardAction action = CreateMessageCardAction(request, key, cueAction);
+                        if (action != null)
+                            message.PotentialActions.Add(action);
+                    }
                 }
             }
 
@@ -221,27 +224,30 @@ namespace Syntinel.Core
                 message.Body[0].Items.Add(description);
             }
 
-            int totalCues = signal.Cues.Keys.Count;
-            foreach (string cue in signal.Cues.Keys)
+            if (signal.Cues != null)
             {
-                AdaptiveCard card = CreateAdaptiveCard(request.Id, cue, signal.Cues[cue]);
-                if (totalCues == 1)
+                int totalCues = signal.Cues.Keys.Count;
+                foreach (string cue in signal.Cues.Keys)
                 {
-                    // Create Single Cue in Main Body of Message
-                    foreach (AdaptiveCardBody body in card.Body)
-                        message.Body.Add(body);
+                    AdaptiveCard card = CreateAdaptiveCard(request.Id, cue, signal.Cues[cue]);
+                    if (totalCues == 1)
+                    {
+                        // Create Single Cue in Main Body of Message
+                        foreach (AdaptiveCardBody body in card.Body)
+                            message.Body.Add(body);
 
-                    foreach (AdaptiveCardAction action in card.Actions)
+                        foreach (AdaptiveCardAction action in card.Actions)
+                            message.Actions.Add(action);
+                    }
+                    else
+                    {
+                        // Create Each Cue as an Action.ShowCard Button
+                        AdaptiveCardAction action = new AdaptiveCardAction();
+                        action.Type = "Action.ShowCard";
+                        action.Title = cue;
+                        action.Card = card;
                         message.Actions.Add(action);
-                }
-                else
-                {
-                    // Create Each Cue as an Action.ShowCard Button
-                    AdaptiveCardAction action = new AdaptiveCardAction();
-                    action.Type = "Action.ShowCard";
-                    action.Title = cue;
-                    action.Card = card;
-                    message.Actions.Add(action);
+                    }
                 }
             }
 

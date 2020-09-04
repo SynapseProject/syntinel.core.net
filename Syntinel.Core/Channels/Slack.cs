@@ -103,11 +103,14 @@ namespace Syntinel.Core
                 mainTitle = signal.Name;
             message.Text = mainTitle;
 
-            foreach (string key in signal.Cues.Keys)
+            if (signal.Cues != null)
             {
-                CueOption cue = signal.Cues[key];
-                SlackAttachment attachment = CreateSlackAttachment(request.Id, key, cue);
-                message.Attachments.Add(attachment);
+                foreach (string key in signal.Cues.Keys)
+                {
+                    CueOption cue = signal.Cues[key];
+                    SlackAttachment attachment = CreateSlackAttachment(request.Id, key, cue);
+                    message.Attachments.Add(attachment);
+                }
             }
 
             return message;
