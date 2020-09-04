@@ -24,7 +24,7 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db);
             ILogger logger = new ConsoleLogger();
 
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal.json", FileMode.Open));
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-UsingTemplate.json", FileMode.Open));
             string fileStr = reader.ReadToEnd();
             Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 

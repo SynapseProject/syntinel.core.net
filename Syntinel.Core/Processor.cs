@@ -55,8 +55,17 @@ namespace Syntinel.Core
             int errorCount = 0;
             foreach (ChannelDbRecord channel in reporter.Channels)
             {
+                ChannelDbRecord target = channel;
+                if (!String.IsNullOrEmpty(channel.TemplateId))
+                {
+                    string[] ids = { channel.TemplateId, "Channel" };
+                    TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
+                    template.SetParameters(channel.Arguments);
+                    target = JsonTools.Convert<ChannelDbRecord>(template.Template);
+                }
+
                 channelCount++;
-                SignalStatus status = SendToChannel(channel, signalDb);
+                SignalStatus status = SendToChannel(target, signalDb);
                 reply.Results.Add(status);
                 if (status.Code == StatusCode.Failure)
                     errorCount++;
