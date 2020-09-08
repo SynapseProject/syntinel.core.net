@@ -31,7 +31,7 @@ namespace Syntinel.Tester
             SignalReply reply = processor.ProcessSignal(signal);
             Console.WriteLine($"Status : {reply.StatusCode}");
             foreach (SignalStatus status in reply.Results)
-                Console.WriteLine($"     {status.Channel} : {status.Code} - {status.Message}");
+                Console.WriteLine($"     {status.ChannelId} : {status.Code} - {status.Message}");
 
             //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
             //string fileStr = reader.ReadToEnd();

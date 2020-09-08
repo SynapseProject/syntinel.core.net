@@ -59,19 +59,32 @@ namespace Syntinel.Core
 
             int channelCount = 0;
             int errorCount = 0;
-            foreach (ChannelDbRecord channel in reporter.Channels)
+            foreach (string key in reporter.Channels.Keys)
             {
-                ChannelDbRecord target = channel;
-                if (!String.IsNullOrEmpty(channel.TemplateId))
+                ChannelDbRecord channel = reporter.Channels[key];
+                SignalStatus status;
+                if (channel != null)
                 {
-                    string[] ids = { channel.TemplateId, "Channel" };
-                    TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                    template.SetParameters(channel.Arguments);
-                    target = JsonTools.Convert<ChannelDbRecord>(template.Template);
+                    ChannelDbRecord target = channel;
+                    if (!String.IsNullOrEmpty(channel.TemplateId))
+                    {
+                        string[] ids = { channel.TemplateId, "Channel" };
+                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
+                        template.SetParameters(channel.Arguments);
+                        target = JsonTools.Convert<ChannelDbRecord>(template.Template);
+                    }
+                    status = SendToChannel(target, signalDb);
+                    status.ChannelId = key;
+                }
+                else
+                {
+                    status = new SignalStatus();
+                    status.ChannelId = key;
+                    status.Code = StatusCode.Failure;
+                    status.Message = $"Channel [{key}] Not Found.";
                 }
 
                 channelCount++;
-                SignalStatus status = SendToChannel(target, signalDb);
                 reply.Results.Add(status);
                 if (status.Code == StatusCode.Failure)
                     errorCount++;
@@ -99,7 +112,6 @@ namespace Syntinel.Core
         {
             SignalStatus status = new SignalStatus
             {
-                Channel = channel.Name,
                 Code = StatusCode.Success,
                 Type = channel.Type,
                 Message = "Success"

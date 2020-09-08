@@ -101,7 +101,11 @@ namespace Syntinel.Core
                 mainTitle = signal.Description;
             else if (String.IsNullOrEmpty(signal.Description))
                 mainTitle = signal.Name;
-            message.Text = mainTitle;
+
+            if (!String.IsNullOrEmpty(mainTitle))
+                message.Text = mainTitle;
+            else if (signal.Cues == null)
+                message.Text = " ";
 
             if (signal.Cues != null)
             {

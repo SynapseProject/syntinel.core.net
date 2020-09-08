@@ -28,8 +28,8 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public StatusCode Code { get; set; }
 
-        [JsonProperty(PropertyName = "channel")]
-        public string Channel { get; set; }
+        [JsonProperty(PropertyName = "channelId")]
+        public string ChannelId { get; set; }
 
         [JsonProperty(PropertyName = "type")]
         public string Type { get; set; }

@@ -1,7 +1,15 @@
 ﻿{
-  "name": "Syntinel",
-  "description": "Alert",
+  "name": "Main Name",
+  "description": "Main Description",
   "reporterId": "_default",
-  "routerId": "MyId",
-  "routerType": "MyIdType"
+  "cues": {
+    "cue1": {
+      "name": "Cue Name",
+      "description": "Cue Description"
+    },
+    "cue2": {
+      "name": "Cue2 Name",
+      "description": "Cue2 Description"
+    }
+  }
 }

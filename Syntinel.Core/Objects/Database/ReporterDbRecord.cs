@@ -21,7 +21,7 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "defaultChannels")]
         public string[] DefaultChannels { get; set; } = { "_default" };
 
-        public List<ChannelDbRecord> Channels { get; set; } = new List<ChannelDbRecord>();
+        public Dictionary<string, ChannelDbRecord> Channels { get; set; } = new Dictionary<string, ChannelDbRecord>();
 
         [JsonProperty(PropertyName = "isActive")]
         public bool IsActive { get; set; } = true;
@@ -34,7 +34,7 @@ namespace Syntinel.Core
                 channelSource = router.Channels;
 
             foreach (string channelId in channelSource)
-                Channels.Add(db.Get<ChannelDbRecord>(channelId));
+                Channels[channelId] = db.Get<ChannelDbRecord>(channelId);
         }
     }
 }
