@@ -16,7 +16,7 @@ namespace Syntinel.Core.Resolvers
             status.ActionId = request.ActionId;
             status.Data = data;
             status.NewStatus = Core.StatusType.Completed;
-            status.CloseSignal = true;
+            status.CloseSignal = false;
 
             return status;
         }
