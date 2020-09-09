@@ -19,6 +19,7 @@
     <Folder Include="Objects\Channels\AzureBotService\" />
     <Folder Include="Objects\Channels\Teams\" />
     <Folder Include="Loggers\" />
+    <Folder Include="Resolvers\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />

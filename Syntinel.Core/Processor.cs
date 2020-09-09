@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Syntinel.Core
 {
@@ -152,7 +153,7 @@ namespace Syntinel.Core
             return status;
         }
 
-        public CueReply ProcessCue(Cue cue)
+        public CueReply ReceiveCue(Cue cue)
         {
             string actionId = "CUE_" + Utils.GenerateId();
             CueReply reply = new CueReply
@@ -160,13 +161,39 @@ namespace Syntinel.Core
                 ActionId = actionId,
                 Id = cue.Id,
                 StatusCode = StatusCode.Success,
-                Time = DateTime.UtcNow
+                Time = DateTime.UtcNow,
+                StatusMessage = "Cue Received"
             };
 
-            SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(cue.Id);
-            if (signal == null)
-                throw new Exception($"Signal [{cue.Id}] Not Found.");
+            try
+            {
+                SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(cue.Id);
+                if (signal == null)
+                    throw new Exception($"Signal [{cue.Id}] Not Found.");
 
+                if (signal.IsActive == false)
+                    throw new Exception($"Signal [{cue.Id}] Is Not Active.");
+
+                SendToCueProcessor(signal, cue, actionId);
+
+            }
+            catch (Exception e)
+            {
+                reply.StatusCode = StatusCode.Failure;
+                reply.StatusMessage = e.Message;
+            }
+
+            return reply;
+
+        }
+
+        public virtual void SendToCueProcessor(SignalDbRecord signal, Cue cue, string actionId)
+        {
+            ProcessCue(signal, cue, actionId);
+        }
+
+        public void ProcessCue(SignalDbRecord signal, Cue cue, string actionId)
+        {
             ActionDbType action = new ActionDbType
             {
                 CueId = cue.CueId,
@@ -188,19 +215,19 @@ namespace Syntinel.Core
             if (signal.Actions == null)
                 signal.Actions = new System.Collections.Generic.Dictionary<string, ActionDbType>();
 
+            Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
+            ResolverRequest request = new ResolverRequest();
+
             try
             {
                 ValidateCue(signal, cue);
 
-                Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
-                ResolverRequest request = new ResolverRequest();
                 request.Id = cue.Id;
                 request.ActionId = actionId;
                 request.CueId = cue.CueId;
                 request.Variables = cue.Variables;
                 request.Config = resolver.Config;
 
-                SendToResolver(resolver, request);
                 signal.Status = StatusType.Received;
             }
             catch (Exception e)
@@ -210,19 +237,21 @@ namespace Syntinel.Core
                     signal.Status = StatusType.Invalid;
                 action.Status = StatusType.Error;
                 action.StatusMessage = e.Message;
-                reply.StatusCode = StatusCode.Failure;
-                reply.StatusMessage = e.Message;
             }
 
             signal.Actions.Add(actionId, action);
             DbEngine.Update<SignalDbRecord>(signal, true);
-
-            return reply;
+            SendToResolver(resolver, request);
         }
 
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
-            Logger.Error($"Resolver [{resolver.Name}] Not Implemented : {JsonTools.Serialize(request)}");
+            Assembly ass = Assembly.GetExecutingAssembly();
+            Type type = ass.GetType("Syntinel.Core.Resolvers.Utilities");
+            MethodInfo method = type.GetMethod("Echo");
+            object[] objs = { request };
+            Status status = (Status)method.Invoke(null, objs);
+            ProcessStatus(status);
         }
 
         public StatusReply ProcessStatus(Status status)

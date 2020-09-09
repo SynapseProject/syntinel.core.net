@@ -145,6 +145,9 @@ Resources:
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix
+          Syntinel_LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
+          Syntinel_LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
+          Syntinel_LocalLambdaRoleProcessStatus: !Ref LocalLambdaRoleProcessStatus
 
   SyntinelProcessCueFunction:
     Type: AWS::Lambda::Function
@@ -169,6 +172,9 @@ Resources:
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix
+          Syntinel_LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
+          Syntinel_LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
+          Syntinel_LocalLambdaRoleProcessStatus: !Ref LocalLambdaRoleProcessStatus
 
   SyntinelProcessStatusFunction:
     Type: AWS::Lambda::Function
@@ -193,6 +199,9 @@ Resources:
           Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
           Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
           Syntinel_ResolverPrefix: !Ref ResolverPrefix
+          Syntinel_LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
+          Syntinel_LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
+          Syntinel_LocalLambdaRoleProcessStatus: !Ref LocalLambdaRoleProcessStatus
 
 Outputs:
   StackName:

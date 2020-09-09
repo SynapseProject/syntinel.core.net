@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.IO;
+using System.Collections.Generic;
 using Syntinel.Core;
 
 using Amazon;
@@ -51,6 +52,20 @@ namespace Syntinel.Aws
 
             return status;
         }
+
+        public override void SendToCueProcessor(SignalDbRecord signal, Cue cue, string actionId)
+        {
+            string lambdaName = Config.ProcessCueLambda;
+            Logger.Info($"Sending Cue To {lambdaName}");
+            Dictionary<string, object> request = new Dictionary<string, object>
+            {
+                ["signal"] = signal,
+                ["cue"] = cue,
+                ["actionId"] = actionId
+            };
+            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
+        }
+
 
         public override void SendToResolver(Resolver resolver, ResolverRequest request)
         {

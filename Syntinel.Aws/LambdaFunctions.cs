@@ -36,13 +36,16 @@ namespace Syntinel.Aws
             return reply;
         }
 
-        public CueReply ProcessCue(Cue cue, ILambdaContext ctx)
+        public void ProcessCue(Dictionary<string,object> request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
-            processor.Logger.Info(JsonTools.Serialize(cue));
-            CueReply reply = processor.ProcessCue(cue);
-            processor.Logger.Info(JsonTools.Serialize(reply));
-            return reply;
+            processor.Logger.Info(JsonTools.Serialize(request));
+
+            Cue cue = (Cue)request["cue"];
+            SignalDbRecord signal = (SignalDbRecord)request["signal"];
+            string actionId = (string)request["actionId"];
+
+            processor.ProcessCue(signal, cue, actionId);
         }
 
         public StatusReply ProcessStatus(Status status, ILambdaContext ctx)
@@ -52,7 +55,6 @@ namespace Syntinel.Aws
             StatusReply reply = processor.ProcessStatus(status);
             processor.Logger.Info(JsonTools.Serialize(reply));
             return reply;
-
         }
 
         public SlackMessage SignalPublisherSlack(ChannelRequest request, ILambdaContext ctx)
@@ -88,7 +90,7 @@ namespace Syntinel.Aws
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Slack.CreateCue(reply);
-            CueReply cueReply = processor.ProcessCue(cue);
+            CueReply cueReply = processor.ReceiveCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
             return cueReply;
         }
@@ -98,7 +100,7 @@ namespace Syntinel.Aws
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Teams.CreateCue(reply);
-            CueReply cueReply = processor.ProcessCue(cue);
+            CueReply cueReply = processor.ReceiveCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
             return cueReply;
         }
@@ -115,6 +117,7 @@ namespace Syntinel.Aws
             processor.Logger.Info(JsonTools.Serialize(request));
             Status status = Ec2Utils.SetInstanceState(request, config.Region);
             processor.Logger.Info(JsonTools.Serialize(status));
+            processor.ProcessStatus(status);
             return status;
         }
     }

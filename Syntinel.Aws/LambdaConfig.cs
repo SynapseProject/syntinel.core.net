@@ -25,6 +25,9 @@ namespace Syntinel.Aws
         public string ChannelPublisherPrefix { get; set; }
         public string ChannelSubscriberPrefix { get; set; }
         public string ResolverPrefix { get; set; }
+        public string ProcessCueLambda { get; set; }
+        public string ProcessSignalLambda { get; set; }
+        public string ProcessStatusLambda { get; set; }
 
 
         // Default Constructor
@@ -43,6 +46,9 @@ namespace Syntinel.Aws
             ChannelPublisherPrefix = GetVariable("Syntinel_ChannelPublisherPrefix", "syntinel-signal-publisher");
             ChannelSubscriberPrefix = GetVariable("Syntinel_ChannelSubscriberPrefix", "syntinel-cue-subscriber");
             ResolverPrefix = GetVariable("Syntinel_ResolverPrefix", "syntinel-resolver");
+            ProcessCueLambda = GetVariable("Syntinel_LocalLambdaRoleProcessCue", "syntinel-process-cue");
+            ProcessSignalLambda = GetVariable("Syntinel_LocalLambdaRoleProcessSignal", "syntinel-process-signal");
+            ProcessStatusLambda = GetVariable("Syntinel_LocalLambdaRoleProcessStatus", "syntinel-process-status");
         }
 
         private static string GetVariable(string variable, string defaultValue = null)
