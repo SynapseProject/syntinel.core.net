@@ -25,6 +25,9 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "isValidReply")]
         public bool IsValidReply { get; set; } = true;
 
+        [JsonProperty(PropertyName = "sendToChannels")]
+        public bool SendToChannels { get; set; } = false;
+
         [JsonProperty(PropertyName = "data")]
         public Dictionary<object, object> Data { get; set; }
     }

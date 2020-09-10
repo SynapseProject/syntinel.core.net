@@ -116,6 +116,7 @@ namespace Syntinel.Aws
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(request));
             Status status = Ec2Utils.SetInstanceState(request, config.Region);
+            status.SendToChannels = true;
             processor.Logger.Info(JsonTools.Serialize(status));
             processor.ProcessStatus(status);
             return status;

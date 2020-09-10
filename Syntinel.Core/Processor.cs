@@ -155,7 +155,8 @@ namespace Syntinel.Core
 
         public CueReply ReceiveCue(Cue cue)
         {
-            string actionId = "CUE_" + Utils.GenerateId();
+            //string actionId = "CUE_" + Utils.GenerateId();
+            string actionId = Utils.GenerateId();
             CueReply reply = new CueReply
             {
                 ActionId = actionId,
@@ -251,6 +252,7 @@ namespace Syntinel.Core
             MethodInfo method = type.GetMethod("Echo");
             object[] objs = { request };
             Status status = (Status)method.Invoke(null, objs);
+            status.SendToChannels = true;
             ProcessStatus(status);
         }
 
@@ -275,7 +277,30 @@ namespace Syntinel.Core
             signal.AddTrace(status);
             DbEngine.Update(signal, true);
 
+            if (status.SendToChannels)
+                SendStatusNotification(status, signal.Signal.ReporterId, signal.Signal.RouterId, signal.Signal.RouterType);
+
             return reply;
+        }
+
+        private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)
+        {
+            Signal signal = new Signal();
+            signal.ReporterId = reporterId;
+            signal.RouterId = routerId;
+            signal.RouterType = routerType;
+            signal.Name = "Status Update";
+            signal.Description = $"Id: [{status.Id}], ActionId [{status.ActionId}]";
+
+            CueOption cue = new CueOption();
+            cue.Name = status.NewStatus.ToString();
+            cue.Description = JsonTools.Serialize(status.Data);
+
+            signal.Cues = new Dictionary<string, CueOption>();
+            signal.Cues["update"] = cue;
+
+            SignalReply reply = ProcessSignal(signal);
+
         }
 
         private SignalDbRecord CreateSignalDbRecord()
