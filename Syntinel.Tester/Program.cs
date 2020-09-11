@@ -5,7 +5,6 @@ using System.Threading;
 
 using Syntinel.Core;
 using Syntinel.Aws;
-using Syntinel.Aws.Resolvers;
 
 using Amazon;
 using Amazon.EC2.Model;

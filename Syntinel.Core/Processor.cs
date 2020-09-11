@@ -248,12 +248,9 @@ namespace Syntinel.Core
 
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
-            Assembly ass = Assembly.GetExecutingAssembly();
-            Type type = ass.GetType("Syntinel.Core.Resolvers.Utilities");
-            MethodInfo method = type.GetMethod("Echo");
-            object[] objs = { request };
-            Status status = (Status)method.Invoke(null, objs);
-            status.SendToChannels = true;
+            IResolver res = AssemblyLoader.Load<IResolver>(resolver.Name);
+            Status status = res.ProcessRequest(request);
+            status.SendToChannels = resolver.Notify;
             ProcessStatus(status);
         }
 

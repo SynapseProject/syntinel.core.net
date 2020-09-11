@@ -65,13 +65,5 @@ namespace Syntinel.Aws
             };
             InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
         }
-
-
-        public override void SendToResolver(Resolver resolver, ResolverRequest request)
-        {
-            String lambdaName = $"{Config.ResolverPrefix}-{resolver.Name}";
-            Logger.Info($"Sending Requst To {resolver.Name} ({lambdaName})");
-            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
-        }
     }
 }

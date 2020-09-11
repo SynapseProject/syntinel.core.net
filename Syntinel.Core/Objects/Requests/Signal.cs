@@ -68,6 +68,9 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
+        [JsonProperty(PropertyName = "notify")]
+        public bool Notify { get; set; } = false;
+
         [JsonProperty(PropertyName = "config")]
         public Dictionary<string, object> Config { get; set; }
     }
