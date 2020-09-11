@@ -155,7 +155,8 @@ namespace Syntinel.Core
 
         public CueReply ReceiveCue(Cue cue)
         {
-            string actionId = "CUE_" + Utils.GenerateId();
+            //string actionId = "CUE_" + Utils.GenerateId();
+            string actionId = Utils.GenerateId();
             CueReply reply = new CueReply
             {
                 ActionId = actionId,
@@ -240,7 +241,8 @@ namespace Syntinel.Core
             }
 
             signal.Actions.Add(actionId, action);
-            DbEngine.Update<SignalDbRecord>(signal, true);
+            signal = DbEngine.Update<SignalDbRecord>(signal, true);
+            request.signal = signal;
             SendToResolver(resolver, request);
         }
 
@@ -251,6 +253,7 @@ namespace Syntinel.Core
             MethodInfo method = type.GetMethod("Echo");
             object[] objs = { request };
             Status status = (Status)method.Invoke(null, objs);
+            status.SendToChannels = true;
             ProcessStatus(status);
         }
 
@@ -275,7 +278,43 @@ namespace Syntinel.Core
             signal.AddTrace(status);
             DbEngine.Update(signal, true);
 
+            if (status.SendToChannels)
+            {
+                if (status.CustomMessage == null)
+                    SendStatusNotification(status, signal.Signal.ReporterId, signal.Signal.RouterId, signal.Signal.RouterType);
+                else
+                    SendStatusNotification(status.CustomMessage);
+            }
+
             return reply;
+        }
+
+        private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)
+        {
+            Signal signal = new Signal();
+            signal.ReporterId = reporterId;
+            signal.RouterId = routerId;
+            signal.RouterType = routerType;
+            signal.Name = "Status Update";
+            signal.Description = $"Id: [{status.Id}], ActionId [{status.ActionId}]";
+
+            CueOption cue = new CueOption();
+            cue.Name = status.NewStatus.ToString();
+            if (String.IsNullOrWhiteSpace(status.Message))
+                cue.Description = JsonTools.Serialize(status.Data, false);
+            else
+                cue.Description = status.Message;
+
+            signal.Cues = new Dictionary<string, CueOption>();
+            signal.Cues["update"] = cue;
+
+            SendStatusNotification(signal);
+
+        }
+
+        private void SendStatusNotification(Signal signal)
+        {
+            SignalReply reply = ProcessSignal(signal);
         }
 
         private SignalDbRecord CreateSignalDbRecord()
