@@ -22,5 +22,8 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "config")]
         public object Config { get; set; }
+
+        [JsonProperty(PropertyName = "signal")]
+        public SignalDbRecord signal { get; set; }
     }
 }

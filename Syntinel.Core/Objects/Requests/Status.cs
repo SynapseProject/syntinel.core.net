@@ -28,10 +28,13 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "sendToChannels")]
         public bool SendToChannels { get; set; } = false;
 
-        [JsonProperty(PropertyName = "message")]
+        [JsonProperty(PropertyName = "customMessage", NullValueHandling = NullValueHandling.Ignore)]
+        public Signal CustomMessage { get; set; }
+
+        [JsonProperty(PropertyName = "message", NullValueHandling = NullValueHandling.Ignore)]
         public string Message { get; set; }
 
-        [JsonProperty(PropertyName = "data")]
+        [JsonProperty(PropertyName = "data", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<object, object> Data { get; set; }
     }
 }

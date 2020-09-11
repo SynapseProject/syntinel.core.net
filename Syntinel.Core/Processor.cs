@@ -241,7 +241,8 @@ namespace Syntinel.Core
             }
 
             signal.Actions.Add(actionId, action);
-            DbEngine.Update<SignalDbRecord>(signal, true);
+            signal = DbEngine.Update<SignalDbRecord>(signal, true);
+            request.signal = signal;
             SendToResolver(resolver, request);
         }
 
@@ -278,7 +279,12 @@ namespace Syntinel.Core
             DbEngine.Update(signal, true);
 
             if (status.SendToChannels)
-                SendStatusNotification(status, signal.Signal.ReporterId, signal.Signal.RouterId, signal.Signal.RouterType);
+            {
+                if (status.CustomMessage == null)
+                    SendStatusNotification(status, signal.Signal.ReporterId, signal.Signal.RouterId, signal.Signal.RouterType);
+                else
+                    SendStatusNotification(status.CustomMessage);
+            }
 
             return reply;
         }
@@ -302,8 +308,13 @@ namespace Syntinel.Core
             signal.Cues = new Dictionary<string, CueOption>();
             signal.Cues["update"] = cue;
 
-            SignalReply reply = ProcessSignal(signal);
+            SendStatusNotification(signal);
 
+        }
+
+        private void SendStatusNotification(Signal signal)
+        {
+            SignalReply reply = ProcessSignal(signal);
         }
 
         private SignalDbRecord CreateSignalDbRecord()
