@@ -63,7 +63,9 @@ namespace Syntinel.Aws
                 ["cue"] = cue,
                 ["actionId"] = actionId
             };
-            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
+            string requestStr = JsonTools.Serialize(request);
+            Logger.Info(requestStr);
+            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, requestStr);
         }
     }
 }

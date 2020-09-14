@@ -15,7 +15,7 @@
         <Command>
           <type>AfterClean</type>
           <command>rm -r *</command>
-          <workingdir>${ProjectDir}/bin/Release/netcoreapp2.1/</workingdir>
+          <workingdir>${ProjectDir}/bin/Release/netcoreapp3.1/</workingdir>
           <externalConsole>True</externalConsole>
         </Command>
       </CustomCommands>
