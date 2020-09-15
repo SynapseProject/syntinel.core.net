@@ -41,8 +41,9 @@ namespace Syntinel.Aws
                     Signal = signal.Signal,
                     Channel = channel
                 };
-
-                InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
+                string requestStr = JsonTools.Serialize(request);
+                Logger.Info(requestStr);
+                InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, requestStr);
             } 
             catch (Exception e)
             {
@@ -53,25 +54,13 @@ namespace Syntinel.Aws
             return status;
         }
 
-        public override void SendToCueProcessor(SignalDbRecord signal, Cue cue, string actionId)
+        public override void SendToCueProcessor(CueRequest request)
         {
             string lambdaName = Config.ProcessCueLambda;
             Logger.Info($"Sending Cue To {lambdaName}");
-            Dictionary<string, object> request = new Dictionary<string, object>
-            {
-                ["signal"] = signal,
-                ["cue"] = cue,
-                ["actionId"] = actionId
-            };
-            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
-        }
-
-
-        public override void SendToResolver(Resolver resolver, ResolverRequest request)
-        {
-            String lambdaName = $"{Config.ResolverPrefix}-{resolver.Name}";
-            Logger.Info($"Sending Requst To {resolver.Name} ({lambdaName})");
-            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, JsonTools.Serialize(request));
+            string requestStr = JsonTools.Serialize(request);
+            Logger.Info(requestStr);
+            InvokeResponse response = AWSUtilities.CallLambdaMethod(Client, lambdaName, requestStr);
         }
     }
 }

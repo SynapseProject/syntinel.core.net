@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 
 using Syntinel.Core;
-using Syntinel.Aws.Resolvers;
 using Amazon.Lambda.Core;
 
 // Allows Lambda Function's JSON Input to be converted into a .NET class
@@ -36,16 +35,11 @@ namespace Syntinel.Aws
             return reply;
         }
 
-        public void ProcessCue(Dictionary<string,object> request, ILambdaContext ctx)
+        public void ProcessCue(CueRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(request));
-
-            Cue cue = (Cue)request["cue"];
-            SignalDbRecord signal = (SignalDbRecord)request["signal"];
-            string actionId = (string)request["actionId"];
-
-            processor.ProcessCue(signal, cue, actionId);
+            processor.ProcessCue(request);
         }
 
         public StatusReply ProcessStatus(Status status, ILambdaContext ctx)
@@ -109,17 +103,6 @@ namespace Syntinel.Aws
         {
             //TODO : Implement Me
             return null;
-        }
-
-        public Status Ec2UtilsSetInstanceState(ResolverRequest request, ILambdaContext ctx)
-        {
-            processor.Logger = new LambdaLogger(ctx.Logger);
-            processor.Logger.Info(JsonTools.Serialize(request));
-            Status status = Ec2Utils.SetInstanceState(request, config.Region);
-            status.SendToChannels = true;
-            processor.Logger.Info(JsonTools.Serialize(status));
-            processor.ProcessStatus(status);
-            return status;
         }
     }
 
