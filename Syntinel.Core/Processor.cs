@@ -175,7 +175,15 @@ namespace Syntinel.Core
                 if (signal.IsActive == false)
                     throw new Exception($"Signal [{cue.Id}] Is Not Active.");
 
-                SendToCueProcessor(signal, cue, actionId);
+                CueRequest request = new CueRequest
+                {
+                    ActionId = actionId,
+                    Id = cue.Id,
+                    Cue = cue,
+                    Signal = signal
+                };
+
+                SendToCueProcessor(request);
 
             }
             catch (Exception e)
@@ -188,13 +196,15 @@ namespace Syntinel.Core
 
         }
 
-        public virtual void SendToCueProcessor(SignalDbRecord signal, Cue cue, string actionId)
+        public virtual void SendToCueProcessor(CueRequest request)
         {
-            ProcessCue(signal, cue, actionId);
+            ProcessCue(request);
         }
 
-        public void ProcessCue(SignalDbRecord signal, Cue cue, string actionId)
+        public void ProcessCue(CueRequest req)
         {
+            SignalDbRecord signal = req.Signal;
+            Cue cue = req.Cue;
             ActionDbType action = new ActionDbType
             {
                 CueId = cue.CueId,
@@ -224,7 +234,7 @@ namespace Syntinel.Core
                 ValidateCue(signal, cue);
 
                 request.Id = cue.Id;
-                request.ActionId = actionId;
+                request.ActionId = req.ActionId;
                 request.CueId = cue.CueId;
                 request.Variables = cue.Variables;
                 request.Config = resolver.Config;
@@ -240,9 +250,10 @@ namespace Syntinel.Core
                 action.StatusMessage = e.Message;
             }
 
-            signal.Actions.Add(actionId, action);
+            signal.Actions.Add(req.ActionId, action);
             signal = DbEngine.Update<SignalDbRecord>(signal, true);
             request.signal = signal;
+            Logger.Info($"Sending To Resolver [{resolver.Name}].  {JsonTools.Serialize(request)}");
             SendToResolver(resolver, request);
         }
 
