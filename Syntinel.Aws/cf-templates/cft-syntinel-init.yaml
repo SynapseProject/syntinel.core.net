@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates and deploys the initial API, Resources and Stage for running the Syntinel application.
+
+Parameters:
+  ### Api Gateway
+  CoreApiGatewayStageName:
+    Type: String
+    Default: syntinel
+    Description: (Required) The stage name for the API Gateway Deployment.
+  DeployToStage:
+    Type: String
+    Default: true
+    AllowedValues: [true, false]
+    Description: (Required) Deploy API Gateway Methods to Stage.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "ADVANCED CONFIGURATION: API Gateway Variables"
+      Parameters:
+      - CoreApiGatewayStageName
+      - DeployToStage
+
+Conditions:
+  DeployApi: !Equals [true, !Ref DeployToStage]
+
+Resources:
+  # Main Rest API
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: syntinel
+      Description: API Entry points for the Syntinel application.
+      EndpointConfiguration:
+        Types:
+        - REGIONAL
+
+  # Methods
+  HelloWorldMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref RestApi
+      ResourceId: { "Fn::GetAtt": ["RestApi", "RootResourceId"] }
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: "{'statusCode': 200}"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "{\"message\": \"Hello From Syntinel.\"}"
+            text/html: Hello From Syntinel.
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  # Deploy To Stage
+  SyntinelDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: DeployApi
+    DependsOn: HelloWorldMethod
+    Properties:
+      RestApiId: !Ref RestApi
+      StageName: !Ref CoreApiGatewayStageName
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  ApiGateway:
+    Description: The resource id for the API Gateway.  Used by subscriber templates to add channel specific objects into the Api Gateway.
+    Value: !Ref RestApi
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelApiGateway"
+
+  InvokeUrl:
+    Description: The invocation URL of the deployment.
+    Value: !Join ["", [ "https://", !Ref RestApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref CoreApiGatewayStageName ] ]
+    Export:
+      Name: !Sub "${AWS::StackName}-InvokeUrl"

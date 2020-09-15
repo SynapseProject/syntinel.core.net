@@ -78,10 +78,6 @@ Parameters:
     Description: The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
 
   #Api Gateway
-  CoreApiGatewayStageName:
-    Type: String
-    Default: syntinel
-    Description: (Required) The stage name for the API Gateway Deployment.
   DeployToStage:
     Type: String
     Default: true
@@ -120,7 +116,6 @@ Metadata:
     - Label:
         default: "ADVANCED CONFIGURATION: API Gateway Variables"
       Parameters:
-      - CoreApiGatewayStageName
       - DeployToStage
 
 Conditions:
@@ -174,18 +169,6 @@ Outputs:
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName
-
-  InvokeUrl:
-    Description: The invocation URL of the deployment.
-    Value: !Join ["", [ "https://", !GetAtt [ SyntinelApiGatewayStack, Outputs.ApiGateway ], ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref CoreApiGatewayStageName ] ]
-    Export:
-      Name: !Sub "${AWS::StackName}-InvokeUrl"
-
-  HelloUrl:
-    Description: The URL of the "hello" function.  Used to test a successful deployment.
-    Value: !Join ["", [ "https://", !GetAtt [ SyntinelApiGatewayStack, Outputs.ApiGateway ], ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref CoreApiGatewayStageName ] ]
-    Export:
-      Name: !Sub "${AWS::StackName}-HelloUrl"
 
   S3BucketNameLambda:
     Description: The S3 bucket that holds the code for these lambda functions.

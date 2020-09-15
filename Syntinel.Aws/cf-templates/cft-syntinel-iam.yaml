@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates the necessary IAM roles and policies for Syntinel.
 Parameters:
-  SyntinelAllManagedPolicyName:
+  SyntinelCoreManagedPolicyName:
     Type: String
-    Default: syntinel-all
+    Default: syntinel-core-policy
     Description: The name for the policy that grants access to all parts of the relay tier for Syntinel.
-  SyntinelLambdaRoleName:
+  SyntinelCoreRoleName:
     Type: String
-    Default: syntinel-lambda-role
+    Default: syntinel-core-role
     Description: The name for the role allowing lambda to work with API Gateway.
   PolicyPermissionBoundry:
     Type: String
@@ -19,8 +19,8 @@ Metadata:
     - Label:
         default: "IAM Policies and Roles (Required)"
       Parameters:
-      - SyntinelAllManagedPolicyName
-      - SyntinelLambdaRoleName
+      - SyntinelCoreManagedPolicyName
+      - SyntinelCoreRoleName
     - Label:
         default: "Role Permission Boundry (If Needed)"
       Parameters:
@@ -28,10 +28,10 @@ Metadata:
 Conditions:
     PolicyPermissionBoundryProvided : !Not [ !Equals [!Ref PolicyPermissionBoundry, ""] ] 
 Resources: 
-  SyntinelAllPolicy: 
+  SyntinelCorePolicy: 
     Type: AWS::IAM::ManagedPolicy
     Properties: 
-      ManagedPolicyName: !Ref SyntinelAllManagedPolicyName
+      ManagedPolicyName: !Ref SyntinelCoreManagedPolicyName
       Description: Combined policy that grants access to all parts of the relay tier for Syntinel.
       PolicyDocument:
         Version: '2012-10-17'
@@ -132,11 +132,11 @@ Resources:
           Action:
           - apigateway:*
           Resource: arn:aws:apigateway:*::/*
-  SyntinelLambdaRole:
-    DependsOn: SyntinelAllPolicy
+  SyntinelCoreRole:
+    DependsOn: SyntinelCorePolicy
     Type: AWS::IAM::Role
     Properties: 
-      RoleName: !Ref SyntinelLambdaRoleName
+      RoleName: !Ref SyntinelCoreRoleName
       Description: Role to allow Api Gateway and Lambda to work together.
       AssumeRolePolicyDocument: 
         Version: '2012-10-17'
@@ -148,7 +148,7 @@ Resources:
             - apigateway.amazonaws.com
           Action: sts:AssumeRole
       ManagedPolicyArns:
-      - !Ref SyntinelAllPolicy
+      - !Ref SyntinelCorePolicy
       PermissionsBoundary: !If [ PolicyPermissionBoundryProvided, !Ref PolicyPermissionBoundry, !Ref "AWS::NoValue" ]
 Outputs:
   StackName:
@@ -157,28 +157,28 @@ Outputs:
 
   LambdaRoleName:
     Description: The Name id for the SyntinelAllRole created.
-    Value: !Ref SyntinelLambdaRole
+    Value: !Ref SyntinelCoreRole
     Export:
-      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleName"
+      Name: !Sub "${AWS::StackName}-SyntinelCoreRoleName"
 
   LambdaRoleArn:
     Description: The ARN of the SyntinelAllRole.
     Value: !GetAtt
-        - SyntinelLambdaRole
+        - SyntinelCoreRole
         - Arn
     Export:
-      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleArn"
+      Name: !Sub "${AWS::StackName}-SyntinelCoreRoleArn"
 
   LambdaRoleId:
     Description: The Role Id of the SyntinelAllRole.
     Value: !GetAtt
-        - SyntinelLambdaRole
+        - SyntinelCoreRole
         - RoleId
     Export:
-      Name: !Sub "${AWS::StackName}-SyntinelLambdaRoleId"
+      Name: !Sub "${AWS::StackName}-SyntinelCoreRoleId"
 
-  AllPolicyArn:
+  CorePolicyArn:
     Description: The ARN of the SyntinelAllPolicy created.
-    Value: !Ref SyntinelAllPolicy
+    Value: !Ref SyntinelCorePolicy
     Export:
-      Name: !Sub "${AWS::StackName}-SyntinelAllPolicyArn"
+      Name: !Sub "${AWS::StackName}-SyntinelCorePolicyArn"

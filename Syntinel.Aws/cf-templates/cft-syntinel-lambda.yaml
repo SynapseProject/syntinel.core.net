@@ -1,0 +1,325 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates the necessary lambda functions for the Syntinel application.
+Parameters:
+  ##### Lambda Function IAM Roles #####
+  IamCloudStackName:
+    Type: String
+    Description: (Conditional) The name for the cloudformation stack used to create the IAM policies.  Required if Global and Local Roles not provided.
+  GlobalCoreRole:
+    Type: String
+    Default: "syntinel-core-role"
+    Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the CloudFormation stack.
+  LocalLambdaRoleProcessSignal:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleProcessCue:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleProcessStatus:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+
+  ##### Lambda Function DotNet Core Code Locations
+  SyntinelCodeBucketName:
+    Type: String
+    Default: -----YourBucketNameHere-----
+    Description: The S3 bucket where the DotNet Core code is located.
+  SyntinelCodeBucketKey:
+    Type: String
+    Default: code/Syntinel.Aws.zip
+    Description: The S3 Key for the zip file containing the lambda DotNet Core code.
+
+  ##### Lambda Function Names
+  ProcessSignalFunctionName:
+    Type: String
+    Default: syntinel-process-signal
+    Description: The name for the function that receives and processes signals from reporters.
+  ProcessCueFunctionName:
+    Type: String
+    Default: syntinel-process-cue
+    Description: The name for the function that receives and processes signals from reporters.
+  ProcessStatusFunctionName:
+    Type: String
+    Default: syntinel-process-status
+    Description: The name for the function that receives and processes signals from reporters.
+  
+  ##### Dynamo Database Table Names
+  ReportersTableName:
+    Type: String
+    Default: syntinel-reporters
+    Description: The name for the Reporters DynamoDb Table.
+  SignalsTableName:
+    Type: String
+    Default: syntinel-signals
+    Description: The name for the Signals DynanoDb Table.
+  ChannelsTableName:
+    Type: String
+    Default: syntinel-channels
+    Description: The name for the Channels DynanoDb Table.
+  RouterTableName:
+    Type: String
+    Default: syntinel-router
+    Description: The name for the Router DynanoDb Table.
+  TemplatesTableName:
+    Type: String
+    Default: syntinel-templates
+    Description: The name for the Templates DynanoDb Table.
+
+  ##### Channel Specific Lambda Function Prefixes
+  ChannelPublisherPrefix:
+    Type: String
+    Default: syntinel-signal-publisher
+    Description: The prefix name for the functions that send signal messages out to channels.  (Example = syntinel-signal-publisher-slack)
+  ChannelSubscriberPrefix:
+    Type: String
+    Default: syntinel-cue-subscriber
+    Description: The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "IAM Roles (Conditional.  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
+      Parameters:
+      - IamCloudStackName
+      - GlobalCoreRole
+      - LocalLambdaRoleProcessSignal
+      - LocalLambdaRoleProcessCue
+      - LocalLambdaRoleProcessStatus
+    - Label:
+        default: "Configuration (Required)"
+      Parameters:
+      - SyntinelCodeBucketName
+      - SyntinelCodeBucketKey
+    - Label:
+        default: "Core Lambda Function Names (Required)"
+      Parameters:
+      - ProcessSignalFunctionName
+      - ProcessCueFunctionName
+      - ProcessStatusFunctionName
+    - Label:
+        default: "Channel Specific Lambda Function Prefixes (Required)"
+      Parameters:
+      - ChannelPublisherPrefix
+      - ChannelSubscriberPrefix
+    - Label:
+        default: "Database Table Names (Required)"
+      Parameters:
+      - SignalsTableName
+      - ReportersTableName
+      - ChannelsTableName
+      - RouterTableName
+      - TemplatesTableName
+Conditions:
+    GlobalIamRoleProvided : !Not [ !Equals [!Ref GlobalCoreRole, ""] ]
+    LocalIamRoleProcessSignalProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessSignal, ""] ]
+    LocalIamRoleProcessCueProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessCue, ""] ]
+    LocalIamRoleProcessStatusProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessStatus, ""] ]
+    
+Resources: 
+  ##### Core Functions
+  SyntinelProcessSignalFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ProcessSignalFunctionName
+      Description: Processes incoming signal messages and forward them off to the appropriate signal publishers.
+      Role: !If [ LocalIamRoleProcessSignalProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessSignal}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessSignal
+      Runtime: dotnetcore3.1
+      Timeout: 300
+      Environment:
+        Variables:
+          Syntinel_DefaultReporterId: "_default"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
+          Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
+          Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
+          Syntinel_ProcessCueFunctionName: !Ref ProcessCueFunctionName
+          Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
+          Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+
+  SyntinelProcessCueFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ProcessCueFunctionName
+      Description: Processes incoming cue messages and forward them off to the appropriate resolvers.
+      Role: !If [ LocalIamRoleProcessCueProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessCue}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessCue
+      Runtime: dotnetcore3.1
+      Timeout: 300
+      Environment:
+        Variables:
+          Syntinel_DefaultReporterId: "_default"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
+          Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
+          Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
+          Syntinel_ProcessCueFunctionName: !Ref ProcessCueFunctionName
+          Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
+          Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+
+  SyntinelProcessStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ProcessStatusFunctionName
+      Description: Processes incoming status messages.
+      Role: !If [ LocalIamRoleProcessStatusProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessStatus}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ProcessStatus
+      Runtime: dotnetcore3.1
+      Timeout: 60
+      Environment:
+        Variables:
+          Syntinel_DefaultReporterId: "_default"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
+          Syntinel_ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
+          Syntinel_ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
+          Syntinel_ProcessCueFunctionName: !Ref ProcessCueFunctionName
+          Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
+          Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+
+  ##### Teams Specific Functions
+  SyntinelSignalPublisherTeams:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ !Ref ChannelPublisherPrefix, "-teams" ] ]
+      Description: Send outbound message to a teams subscriber.
+      Role: !If [ LocalLambdaRolePublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRolePublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherTeams
+      Runtime: dotnetcore3.1
+      Timeout: 30
+  
+  SyntinelCueSubscriberTeams:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ !Ref ChannelSubscriberPrefix, "-teams" ] ]
+      Description: Receive inbound cue messages from a slack subscriber.
+      Role: !If [ LocalLambdaRoleSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::CueSubscriberTeams
+      Runtime: dotnetcore3.1
+      Timeout: 30
+
+  ##### Slack Specific Functions
+  SyntinelSignalPublisherSlack:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ !Ref ChannelPublisherPrefix, "-slack" ] ]
+      Description: Send outbound message to a slack subscriber.
+      Role: !If [ LocalLambdaRolePublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRolePublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::SignalPublisherSlack
+      Runtime: dotnetcore3.1
+      Timeout: 30
+  
+  SyntinelCueSubscriberSlack:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Join [ "", [ !Ref ChannelSubscriberPrefix, "-slack" ] ]
+      Description: Receive inbound cue messages from a slack subscriber.
+      Role: !If [ LocalLambdaRoleSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalLambdaRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${CoreCloudStackName}-IamLambdaRoleARN" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::CueSubscriberSlack
+      Runtime: dotnetcore3.1
+      Timeout: 30
+
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  ProcessSignalFunctionName:
+    Description: The name of the lambda function to process inbound signal messages.
+    Value: !Ref SyntinelProcessSignalFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessSignalFunctionName"
+  ProcessSignalFunctionArn:
+    Description: The ARN of the lambda function to process inbound signal messages.
+    Value: !GetAtt
+        - SyntinelProcessSignalFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessSignalFunctionArn"
+  ProcessSignalFunctionUrl:
+    Description: The URL of the lambda function to process inbound signal messages (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelProcessSignalFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessSignalFunctionUrl"
+  
+  ProcessCueFunctionName:
+    Description: The name of the lambda function to process inbound cue messages.
+    Value: !Ref SyntinelProcessCueFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessCueFunctionName"
+  ProcessCueFunctionArn:
+    Description: The ARN of the lambda function to process inbound cue messages.
+    Value: !GetAtt
+        - SyntinelProcessCueFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessCueFunctionArn"
+  ProcessCueFunctionUrl:
+    Description: The URL of the lambda function to process inbound cue messages (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelProcessCueFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessCueFunctionUrl"
+    
+  ProcessStatusFunctionName:
+    Description: The name of the lambda function to process inbound status messages.
+    Value: !Ref SyntinelProcessStatusFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessStatusFunctionName"
+  ProcessStatusFunctionArn:
+    Description: The ARN of the lambda function to process inbound status messages.
+    Value: !GetAtt
+        - SyntinelProcessStatusFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessStatusFunctionArn"
+  ProcessStatusFunctionUrl:
+    Description: The URL of the lambda function to process inbound status messages (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelProcessStatusFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelProcessStatusFunctionUrl"
+  
