@@ -1,0 +1,578 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates and deploys the API gateway objects for running the Syntinel application.
+
+Parameters:
+  ##### Cloud Formation Stacks #####
+  InitCloudStackName:
+    Type: String
+    Default: syntinel-init
+    Description: (Required) The name for the cloudformation stack used to initialize Syntinel (create initial ApiGateway).
+
+  LambdaCloudStackName:
+    Type: String
+    Default: syntinel-lambda
+    Description: (Required) The name for the cloudformation stack used to create the Lambda functions.
+
+  ##### Lambda Function ARNs #####
+  SignalLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Signal messages. Overrides value from CloudStack.
+
+  CueLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Cue messages. Overrides value from CloudStack.
+
+  StatusLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Status messages. Overrides value from CloudStack.
+
+  TeamsSubscriberLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that receives messages from Teams. Overrides value from CloudStack.
+
+  SlackSubscriberLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that receives messages from Slack. Overrides value from CloudStack.
+
+  ##### API Gateway Variables #####
+  ApiGatewayStageName:
+    Type: String
+    Default: syntinel
+    Description: (Required) The stage name for the API Gateway Deployment.
+
+  DeployToStage:
+    Type: String
+    Default: true
+    AllowedValues: [true, false]
+    Description: (Required) Deploy API Gateway Methods to Stage.
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cloud Formation Stacks"
+      Parameters:
+      - InitCloudStackName
+      - LambdaCloudStackName
+    - Label:
+        default: "Deployment Variables"
+      Parameters:
+      - ApiGatewayStageName
+      - DeployToStage
+    - Label:
+        default: "Lambda Function ARNs"
+      Parameters:
+      - SignalLambdaProcessorArn
+      - CueLambdaProcessorArn
+      - StatusLambdaProcessorArn
+      - TeamsSubscriberLambdaArn
+      - SlackSubscriberLambdaArn
+
+Conditions:
+  SignalLambdaArnProvided : !Not [ !Equals [!Ref SignalLambdaProcessorArn, ""] ]
+  CueLambdaArnProvided : !Not [ !Equals [!Ref CueLambdaProcessorArn, ""] ]
+  StatusLambdaArnProvided : !Not [ !Equals [!Ref StatusLambdaProcessorArn, ""] ]
+  TeamsSubscriberLambdaArnProvided : !Not [ !Equals [!Ref TeamsSubscriberLambdaArn, ""] ]
+  SlackSubscriberLambdaArnProvided : !Not [ !Equals [!Ref SlackSubscriberLambdaArn, ""] ]
+  DeployApi: !Equals [true, !Ref DeployToStage]
+
+Resources:
+  # Main Rest API
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: syntinel
+      Description: API Entry points for the Syntinel application.
+      EndpointConfiguration:
+        Types:
+        - REGIONAL
+
+  # Models
+  SignalModel: 
+    Type: AWS::ApiGateway::Model
+    Properties:
+      Name: Signal
+      Description: Model for a Signal message.
+      ContentType: application/json
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      Schema: |
+        {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "type": "object",
+          "required": [ "name", "description", "cues" ],
+          "properties": {
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "maxReplies": { "type": "integer" },
+              "reporterId": { "type": "string" },
+              "cues": {
+                  "type": "object",
+                  "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                          "name": { "type": "string" },
+                          "template": { "type": "string" },
+                          "arguments": { "type": "object" },
+                          "description": { "type": "string" },
+                          "resolver": {
+                              "type": "object",
+                              "required": [ "name" ],
+                              "properties": {
+                                  "name": { "type": "string" },
+                                  "config": { "type": "object"}
+                              }
+                          },
+                          "inputs": {
+                              "type": "array",
+                              "items": {
+                                  "type": "object",
+                                  "required": ["name", "type"],
+                                  "properties": {
+                                      "name": { "type": "string" },
+                                      "description": { "type": "string" },
+                                      "type": { "type": "string" },
+                                      "defaultValue": { "type": "string" },
+                                      "allowMultipleValues": { "type": "boolean" },
+                                      "values": { 
+                                          "type": "array",
+                                          "items": {
+                                              "type": "object",
+                                              "additionalProperties": {
+                                                  "type": "string"
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          },
+                          "actions": {
+                              "type": "array",
+                              "items": {
+                                  "type": "object",
+                                  "required": ["name", "type"],
+                                  "properties": {
+                                      "name": { "type": "string" },
+                                      "description": { "type": "string" },
+                                      "type": { "type": "string" },
+                                      "defaultValue": { "type": "string" },
+                                      "allowMultipleValues": { "type": "boolean" },
+                                      "values": { 
+                                          "type": "object",
+                                          "additionalProperties": {
+                                              "type": "string"
+                                          }
+                                      }
+                                  }
+                              }
+                          },
+                          "defaultAction": { "type": "string" }
+                      }
+                  }
+              },
+              "defaultCue": { "type": "string" },
+              "defaultCueTimeout": { "type": "integer" }
+          }
+        }
+
+  CueModel: 
+    Type: AWS::ApiGateway::Model
+    Properties:
+      Name: Cue
+      Description: Model for a Cue message.
+      ContentType: application/json
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      Schema: |
+        {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "required": [ "id", "cue" ],
+            "properties": {
+                "id": { "type": "string" },
+                "cue": { "type": "string" },
+                "variables": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": [ "name", "values" ],
+                        "properties": {
+                            "name": { "type": "string" },
+                            "values": { 
+                                "type": "array",
+                                "items": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+  StatusModel: 
+    Type: AWS::ApiGateway::Model
+    Properties:
+      Name: Status
+      Description: Model for a Status message.
+      ContentType: application/json
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      Schema: |
+        {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "type": "object",
+            "required": [ "id" ],
+            "properties": {
+                "id": { "type": "string" },
+                "actionId": { "type": "string" },
+                "status": { "type": "string" },
+                "closeSignal": { "type": "boolean" },
+                "isValidReply": { "type": "boolean" },
+                "data": { "type": "object" }
+            }
+        }
+
+  # Resources
+  AdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-RootResourceId" } }
+      PathPart: admin
+
+  CueResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-RootResourceId" } }
+      PathPart: cue
+
+  SignalResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-RootResourceId" } }
+      PathPart: signal
+
+  StatusResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-RootResourceId" } }
+      PathPart: status
+
+  ChannelAdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref AdminResource
+      PathPart: channel
+
+  ReporterAdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref AdminResource
+      PathPart: reporter
+
+  SubscriberAdminResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref AdminResource
+      PathPart: subscriber
+
+  TeamsResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref CueResource
+      PathPart: teams
+
+  SlackResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref CueResource
+      PathPart: slack
+
+
+  # Request Validators
+  BodyRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties:
+      Name: Validate Body Only
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
+
+  # Core Methods
+  SignalPostMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref SignalResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ SignalLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SignalLambdaProcessorArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessSignalFunctionUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200          
+      RequestValidatorId: !Ref BodyRequestValidator
+      RequestModels:
+        application/json: !Ref SignalModel
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  CuePostMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref CueResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ CueLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CueLambdaProcessorArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessCueFunctionUrl" } } ]
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        RequestTemplates:
+          application/json: "$input.body"
+          application/x-www-form-urlencoded: "{ \"_qs\": \"$input.body\" }"
+        IntegrationResponses:
+        - StatusCode: 200          
+      RequestValidatorId: !Ref BodyRequestValidator
+      RequestModels:
+        application/json: !Ref CueModel
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  StatusPostMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref StatusResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ StatusLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StatusLambdaProcessorArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessStatusFunctionUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ""
+      RequestValidatorId: !Ref BodyRequestValidator
+      RequestModels:
+        application/json: !Ref StatusModel
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  # Teams Methods
+  TeamsHelloWorldMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref TeamsResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: "{'statusCode': 200}"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "{\"message\": \"Hello From Syntinel - Teams.\"}"
+            text/html: Hello From Syntinel - Teams.
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  TeamsCueMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref TeamsResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ TeamsSubscriberLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TeamsSubscriberLambdaArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelCueSubscriberTeamsUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ""
+          ResponseParameters:
+            method.response.header.CARD-ACTION-STATUS: "integration.response.body"
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: "Empty"
+        ResponseParameters:
+          method.response.header.CARD-ACTION-STATUS: true
+
+  # Slack Methods
+  SlackHelloWorldMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref SlackResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: MOCK
+        RequestTemplates:
+          application/json: "{'statusCode': 200}"
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: "{\"message\": \"Hello From Syntinel - Slack.\"}"
+            text/html: Hello From Syntinel - Slack.
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  SlackCueMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref SlackResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !Join ["", ["arn:aws:apigateway:", {"Ref": "AWS::Region"}, ":lambda:path/2015-03-31/functions/", {"Fn::GetAtt": ["SyntinelCueSubscriberSlack", "Arn"]}, "/invocations"]]
+        Uri: !If [ SlackSubscriberLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SlackSubscriberLambdaArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelCueSubscriberSlackUrl" } } ]
+        RequestTemplates:
+          application/x-www-form-urlencoded: |
+            ##  See http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-mapping-template-reference.html
+            ##  This template will pass through all parameters including path, querystring, header, stage variables, and context through to the integration endpoint via the body/payload
+            #set($allParams = $input.params())
+            {
+            "body-json" : $input.json('$'),
+            "params" : {
+            #foreach($type in $allParams.keySet())
+                #set($params = $allParams.get($type))
+            "$type" : {
+                #foreach($paramName in $params.keySet())
+                "$paramName" : "$util.escapeJavaScript($params.get($paramName))"
+                    #if($foreach.hasNext),#end
+                #end
+            }
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "stage-variables" : {
+            #foreach($key in $stageVariables.keySet())
+            "$key" : "$util.escapeJavaScript($stageVariables.get($key))"
+                #if($foreach.hasNext),#end
+            #end
+            },
+            "context" : {
+                "account-id" : "$context.identity.accountId",
+                "api-id" : "$context.apiId",
+                "api-key" : "$context.identity.apiKey",
+                "authorizer-principal-id" : "$context.authorizer.principalId",
+                "caller" : "$context.identity.caller",
+                "cognito-authentication-provider" : "$context.identity.cognitoAuthenticationProvider",
+                "cognito-authentication-type" : "$context.identity.cognitoAuthenticationType",
+                "cognito-identity-id" : "$context.identity.cognitoIdentityId",
+                "cognito-identity-pool-id" : "$context.identity.cognitoIdentityPoolId",
+                "http-method" : "$context.httpMethod",
+                "stage" : "$context.stage",
+                "source-ip" : "$context.identity.sourceIp",
+                "user" : "$context.identity.user",
+                "user-agent" : "$context.identity.userAgent",
+                "user-arn" : "$context.identity.userArn",
+                "request-id" : "$context.requestId",
+                "resource-id" : "$context.resourceId",
+                "resource-path" : "$context.resourcePath"
+                }
+            }
+        IntegrationResponses:
+        - StatusCode: 200
+          ResponseTemplates:
+            application/json: ""
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  # Grant ApiGateway Permission To Call The Lambda Functions
+  SyntinelProcessSignalPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ SignalLambdaArnProvided, !Ref SignalLambdaProcessorArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessSignalFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Ref": "RestApi" }, "/*/*/*" ] ] }            
+
+  SyntinelProcessCuePermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ CueLambdaArnProvided, !Ref CueLambdaProcessorArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessCueFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Ref": "RestApi" }, "/*/*/*" ] ] }            
+
+  SyntinelProcessStatusPermissions:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ StatusLambdaArnProvided, !Ref StatusLambdaProcessorArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelProcessStatusFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Ref": "RestApi" }, "/*/*/*" ] ] }            
+
+  SyntinelCueSubscriberTeamsPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ TeamsSubscriberLambdaArnProvided, !Ref TeamsSubscriberLambdaArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelCueSubscriberTeamsArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Ref": "RestApi" }, "/*/*/*" ] ] }            
+
+  SyntinelCueSubscriberSlackPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: { "Fn::GetAtt": [ "SyntinelCueSubscriberSlack", "Arn" ]}
+      FunctionName: !If [ SlackSubscriberLambdaArnProvided, !Ref SlackSubscriberLambdaArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelCueSubscriberSlackArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Ref": "RestApi" }, "/*/*/*" ] ] }            
+
+  # Deploy To Stage
+  SyntinelDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Condition: DeployApi
+    DependsOn: 
+    - SignalPostMethod
+    - CuePostMethod
+    - StatusPostMethod
+    - TeamsHelloWorldMethod
+    - TeamsCueMethod
+    - SlackHelloWorldMethod
+    - SlackCueMethod
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      StageName: !Ref ApiGatewayStageName
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  ApiGateway:
+    Description: The resource id for the API Gateway.  Used by subscriber templates to add channel specific objects into the Api Gateway.
+    Value: !Ref RestApi
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelApiGateway"

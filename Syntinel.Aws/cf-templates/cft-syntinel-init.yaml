@@ -73,10 +73,18 @@ Outputs:
     Value:  !Ref AWS::StackName
 
   ApiGateway:
-    Description: The resource id for the API Gateway.  Used by subscriber templates to add channel specific objects into the Api Gateway.
+    Description: The resource id for the API Gateway.
     Value: !Ref RestApi
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelApiGateway"
+
+  RootResourceId:
+    Description: The root resource id for the API Gateway. 
+    Value: !GetAtt
+        - RestApi
+        - RootResourceId
+    Export:
+      Name: !Sub "${AWS::StackName}-RootResourceId"
 
   InvokeUrl:
     Description: The invocation URL of the deployment.
