@@ -4,10 +4,10 @@ Parameters:
   ##### Lambda Function IAM Roles #####
   IamCloudStackName:
     Type: String
+    Default: "syntinel-iam"
     Description: (Conditional) The name for the cloudformation stack used to create the IAM policies.  Required if Global and Local Roles not provided.
   GlobalCoreRole:
     Type: String
-    Default: "syntinel-core-role"
     Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the CloudFormation stack.
   LocalLambdaRoleProcessSignal:
     Type: String
@@ -30,9 +30,6 @@ Parameters:
   LocalLambdaRoleSlackSubscriber:
     Type: String
     Description: (Optional) The name of the role to be used only with the Slack Channel Subscriber lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
-  LocalLambdaRoleAutoUpdater:
-    Type: String
-    Description: (Optional) The name of the role to be used only with the lambda auto-updater function.  This overrides any Global roles or roles from the CloudFormation stack.
 
   ##### Lambda Function DotNet Core Code Locations
   SyntinelCodeBucketName:
@@ -43,11 +40,6 @@ Parameters:
     Type: String
     Default: code/Syntinel.Aws.zip
     Description: The S3 Key for the zip file containing the lambda DotNet Core code.
-  AutoUpdateFunction:
-    Type: String
-    Default: false
-    AllowedValues: [true, false]
-    Description: Creates a lambda function that will update and publish all the Syntinel lambda functions everytime a new ZIP file is uploaded to the S3 bucket/key specified.
 
   ##### Lambda Function Names
   ProcessSignalFunctionName:
@@ -62,10 +54,6 @@ Parameters:
     Type: String
     Default: syntinel-process-status
     Description: The name for the function that receives and processes signals from reporters.
-  AutoUpdateFunctionName:
-    Type: String
-    Default: syntinel-lambda-autoupdate
-    Description: The name for the function that monitors the s3 bucket for newly uploaded lambda source code zipfile.
   
   ##### Dynamo Database Table Names
   ReportersTableName:
@@ -107,7 +95,6 @@ Metadata:
       Parameters:
       - SyntinelCodeBucketName
       - SyntinelCodeBucketKey
-      - AutoUpdateFunction
     - Label:
         default: "IAM Roles (Conditional.  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
       Parameters:
@@ -120,14 +107,12 @@ Metadata:
       - LocalLambdaRoleTeamsSubscriber
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
-      - LocalLambdaRoleAutoUpdater
     - Label:
         default: "Core Lambda Function Names (Required)"
       Parameters:
       - ProcessSignalFunctionName
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
-      - AutoUpdateFunctionName
     - Label:
         default: "Channel Specific Lambda Function Prefixes (Required)"
       Parameters:
@@ -150,9 +135,6 @@ Conditions:
     LocalIamRoleTeamsSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleTeamsSubscriber, ""] ]
     LocalIamRoleSlackPublisherProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackPublisher, ""] ]
     LocalIamRoleSlackSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackSubscriber, ""] ]
-    LocalLambdaRoleAutoUpdaterProvided : !Not [ !Equals [!Ref LocalLambdaRoleAutoUpdater, ""] ]
-    CreateUpdateFunction: !Equals [true, !Ref AutoUpdateFunction]
-
     
 Resources: 
   ##### Core Functions
@@ -161,7 +143,7 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessSignalFunctionName
       Description: Processes incoming signal messages and forward them off to the appropriate signal publishers.
-      Role: !If [ LocalIamRoleProcessSignalProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessSignal}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleProcessSignalProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessSignal}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -187,7 +169,7 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessCueFunctionName
       Description: Processes incoming cue messages and forward them off to the appropriate resolvers.
-      Role: !If [ LocalIamRoleProcessCueProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessCue}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleProcessCueProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessCue}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -213,7 +195,7 @@ Resources:
     Properties:
       FunctionName: !Ref ProcessStatusFunctionName
       Description: Processes incoming status messages.
-      Role: !If [ LocalIamRoleProcessStatusProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessStatus}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleProcessStatusProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleProcessStatus}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -240,7 +222,7 @@ Resources:
     Properties:
       FunctionName: !Join [ "", [ !Ref ChannelPublisherPrefix, "-teams" ] ]
       Description: Send outbound message to a teams subscriber.
-      Role: !If [ LocalIamRoleTeamsPublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleTeamsPublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleTeamsPublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleTeamsPublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -266,7 +248,7 @@ Resources:
     Properties:
       FunctionName: !Join [ "", [ !Ref ChannelSubscriberPrefix, "-teams" ] ]
       Description: Receive inbound cue messages from a slack subscriber.
-      Role: !If [ LocalIamRoleTeamsSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleTeamsSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleTeamsSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleTeamsSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -293,7 +275,7 @@ Resources:
     Properties:
       FunctionName: !Join [ "", [ !Ref ChannelPublisherPrefix, "-slack" ] ]
       Description: Send outbound message to a slack subscriber.
-      Role: !If [ LocalIamRoleSlackPublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSlackPublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleSlackPublisherProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSlackPublisher}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -319,7 +301,7 @@ Resources:
     Properties:
       FunctionName: !Join [ "", [ !Ref ChannelSubscriberPrefix, "-slack" ] ]
       Description: Receive inbound cue messages from a slack subscriber.
-      Role: !If [ LocalIamRoleSlackSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSlackSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalIamRoleSlackSubscriberProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleSlackSubscriber}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         S3Bucket: !Ref SyntinelCodeBucketName
         S3Key: !Ref SyntinelCodeBucketKey
@@ -339,57 +321,6 @@ Resources:
           Syntinel_ProcessCueFunctionName: !Ref ProcessCueFunctionName
           Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
           Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
-
-  SyntinelAutoUpdateFunction:
-    Type: AWS::Lambda::Function
-    Condition: CreateUpdateFunction
-    Properties:
-      FunctionName: !Ref AutoUpdateFunctionName
-      Description: Updates Lambda functions when new zipfile is uploaded to the s3 bucket/key specified.
-      Role: !If [ LocalLambdaRoleAutoUpdaterProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleAutoUpdater}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
-      Code:
-        ZipFile: |
-          import json
-          import sys
-          import os
-          import boto3
-
-          def lambda_handler(event, context):
-              lambdaFunctions = os.environ["lambdaFunctions"]
-              lambdaFunctions = lambdaFunctions.split(',')
-              s3Bucket = os.environ["s3Bucket"]
-              s3Key = os.environ["s3Key"]
-
-              print(json.dumps(event))
-              client = boto3.client("lambda")
-              for function in lambdaFunctions:
-                  response = client.update_function_code(
-                      FunctionName=function,
-                      S3Bucket=s3Bucket,
-                      S3Key=s3Key,
-                      Publish=True
-                  )
-                  print(f"Function [{function}] Has Been Updated. {json.dumps(response)}")
-
-              return {
-                  'statusCode': 200
-              }
-      Handler: index.lambda_handler
-      Runtime: python3.7
-      Timeout: 60
-      Environment:
-        Variables:
-          lambdaFunctions: !Join
-            - ','
-            - - !Ref SyntinelProcessSignalFunction
-              - !Ref SyntinelProcessCueFunction
-              - !Ref SyntinelProcessStatusFunction
-              - !Ref SyntinelSignalPublisherTeams
-              - !Ref SyntinelCueSubscriberTeams
-              - !Ref SyntinelSignalPublisherSlack
-              - !Ref SyntinelCueSubscriberSlack
-          s3Bucket: !Ref SyntinelCodeBucketName
-          s3Key: !Ref SyntinelCodeBucketKey
 
 Outputs:
   StackName:

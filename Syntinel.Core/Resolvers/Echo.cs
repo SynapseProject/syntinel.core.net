@@ -25,7 +25,6 @@ public class Echo : IResolver
         status.Data = data;
         status.NewStatus = StatusType.Completed;
         status.CloseSignal = false;
-        status.SendToChannels = true;
 
         return status;
     }
