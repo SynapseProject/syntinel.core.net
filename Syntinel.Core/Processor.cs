@@ -308,10 +308,10 @@ namespace Syntinel.Core
 
             CueOption cue = new CueOption();
             cue.Name = status.NewStatus.ToString();
-            if (String.IsNullOrWhiteSpace(status.Message))
-                cue.Description = JsonTools.Serialize(status.Data, false);
-            else
+            if (!String.IsNullOrWhiteSpace(status.Message))
                 cue.Description = status.Message;
+            else if (status.Data != null)
+                cue.Description = JsonTools.Serialize(status.Data, false);
 
             signal.Cues = new Dictionary<string, CueOption>();
             signal.Cues["update"] = cue;
