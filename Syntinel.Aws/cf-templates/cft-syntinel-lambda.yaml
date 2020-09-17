@@ -30,6 +30,9 @@ Parameters:
   LocalLambdaRoleSlackSubscriber:
     Type: String
     Description: (Optional) The name of the role to be used only with the Slack Channel Subscriber lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleAutoUpdater:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda auto-updater function.  This overrides any Global roles or roles from the CloudFormation stack.
 
   ##### Lambda Function DotNet Core Code Locations
   SyntinelCodeBucketName:
@@ -40,6 +43,11 @@ Parameters:
     Type: String
     Default: code/Syntinel.Aws.zip
     Description: The S3 Key for the zip file containing the lambda DotNet Core code.
+  AutoUpdateFunction:
+    Type: String
+    Default: false
+    AllowedValues: [true, false]
+    Description: Creates a lambda function that will update and publish all the Syntinel lambda functions everytime a new ZIP file is uploaded to the S3 bucket/key specified.
 
   ##### Lambda Function Names
   ProcessSignalFunctionName:
@@ -54,6 +62,10 @@ Parameters:
     Type: String
     Default: syntinel-process-status
     Description: The name for the function that receives and processes signals from reporters.
+  AutoUpdateFunctionName:
+    Type: String
+    Default: syntinel-lambda-autoupdate
+    Description: The name for the function that monitors the s3 bucket for newly uploaded lambda source code zipfile.
   
   ##### Dynamo Database Table Names
   ReportersTableName:
@@ -87,7 +99,6 @@ Parameters:
     Default: syntinel-cue-subscriber
     Description: The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
 
-
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -96,6 +107,7 @@ Metadata:
       Parameters:
       - SyntinelCodeBucketName
       - SyntinelCodeBucketKey
+      - AutoUpdateFunction
     - Label:
         default: "IAM Roles (Conditional.  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
       Parameters:
@@ -108,12 +120,14 @@ Metadata:
       - LocalLambdaRoleTeamsSubscriber
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
+      - LocalLambdaRoleAutoUpdater
     - Label:
         default: "Core Lambda Function Names (Required)"
       Parameters:
       - ProcessSignalFunctionName
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
+      - AutoUpdateFunctionName
     - Label:
         default: "Channel Specific Lambda Function Prefixes (Required)"
       Parameters:
@@ -132,11 +146,13 @@ Conditions:
     LocalIamRoleProcessSignalProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessSignal, ""] ]
     LocalIamRoleProcessCueProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessCue, ""] ]
     LocalIamRoleProcessStatusProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessStatus, ""] ]
-
     LocalIamRoleTeamsPublisherProvided : !Not [ !Equals [!Ref LocalLambdaRoleTeamsPublisher, ""] ]
     LocalIamRoleTeamsSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleTeamsSubscriber, ""] ]
     LocalIamRoleSlackPublisherProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackPublisher, ""] ]
     LocalIamRoleSlackSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackSubscriber, ""] ]
+    LocalLambdaRoleAutoUpdaterProvided : !Not [ !Equals [!Ref LocalLambdaRoleAutoUpdater, ""] ]
+    CreateUpdateFunction: !Equals [true, !Ref AutoUpdateFunction]
+
     
 Resources: 
   ##### Core Functions
@@ -324,6 +340,56 @@ Resources:
           Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
           Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
 
+  SyntinelAutoUpdateFunction:
+    Type: AWS::Lambda::Function
+    Condition: CreateUpdateFunction
+    Properties:
+      FunctionName: !Ref AutoUpdateFunctionName
+      Description: Updates Lambda functions when new zipfile is uploaded to the s3 bucket/key specified.
+      Role: !If [ LocalLambdaRoleAutoUpdaterProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleAutoUpdater}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        ZipFile: |
+          import json
+          import sys
+          import os
+          import boto3
+
+          def lambda_handler(event, context):
+              lambdaFunctions = os.environ["lambdaFunctions"]
+              lambdaFunctions = lambdaFunctions.split(',')
+              s3Bucket = os.environ["s3Bucket"]
+              s3Key = os.environ["s3Key"]
+
+              print(json.dumps(event))
+              client = boto3.client("lambda")
+              for function in lambdaFunctions:
+                  response = client.update_function_code(
+                      FunctionName=function,
+                      S3Bucket=s3Bucket,
+                      S3Key=s3Key,
+                      Publish=True
+                  )
+                  print(f"Function [{function}] Has Been Updated. {json.dumps(response)}")
+
+              return {
+                  'statusCode': 200
+              }
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      Timeout: 60
+      Environment:
+        Variables:
+          lambdaFunctions: !Join
+            - ','
+            - - !Ref SyntinelProcessSignalFunction
+              - !Ref SyntinelProcessCueFunction
+              - !Ref SyntinelProcessStatusFunction
+              - !Ref SyntinelSignalPublisherTeams
+              - !Ref SyntinelCueSubscriberTeams
+              - !Ref SyntinelSignalPublisherSlack
+              - !Ref SyntinelCueSubscriberSlack
+          s3Bucket: !Ref SyntinelCodeBucketName
+          s3Key: !Ref SyntinelCodeBucketKey
 
 Outputs:
   StackName:
