@@ -59,7 +59,6 @@ Parameters:
     Description: (Required) The name for the role allowing lambda to work with API Gateway.
   PolicyPermissionBoundry:
     Type: String
-    Default: arn:aws:iam::286148036853:policy/WS-0096-pol_PlatformUserBoundary
     Description: (Optional) If a policy permission boundry is required, please enter the full arn here.
 
   ### Dynamo Database Table Names
