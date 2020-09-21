@@ -3,25 +3,78 @@
 
 The cloud formation template "cft-syntinel.yaml" creates all the necessary resources required to run Syntinel in your AWS account.  
 
-This template calls the cloud formation templates in the "stacks" directory, passing the required information into each template.  It assumes you are running the template with a role that has the permissions to create the resources necessary (listed below).  
+This template calls the cloud formation templates in the "stacks" directory, passing the required information into each template.  It assumes you are running the template with a policy that has the permissions to create the resources necessary (listed below).  The policy document can be found in the "policies" directory.
 
-**Required Permissions**
-* Create IAM Roles and Policies
-* Create Lambda Functions
-* Create DynamoDb Tables
-* Create APIGateway Resources
-* Deploy APIGateway Resources
+**Minimum Required Permissions**
+- apigateway:
+    - DELETE
+    - GET
+    - PATCH
+    - POST
+    - PUT
+- cloudformation:
+    - CreateStack
+    - CreateStackInstances
+    - DeleteStack
+    - DeleteStackInstances
+    - DescribeChangeSet
+    - DescribeStackEvents
+    - DescribeStacks
+    - GetTemplate
+    - GetTemplateSummary
+    - ListStackInstances
+    - ListStackResources
+    - ListStacks
+    - ListStackSetOperations
+    - UpdateStack
+    - UpdateStackInstances
+    - ValidateTemplate
+- dynamodb:
+    - CreateTable
+    - DeleteTable
+    - DescribeTable
+    - UpdateTable
+- iam:
+    - AttachRolePolicy
+    - CreatePolicy
+    - CreatePolicyVersion
+    - CreateRole
+    - DeletePolicy
+    - DeletePolicyVersion
+    - DeleteRole
+    - DetachRolePolicy
+    - GetPolicy
+    - GetRole
+    - ListAttachedRolePolicies
+    - ListPolicies
+    - ListPolicyVersions
+    - ListRoles
+    - PassRole
+    - UpdateRole
+- lambda:
+    - AddPermission
+    - CreateFunction
+    - DeleteFunction
+    - GetAccountSettings
+    - GetFunction
+    - GetFunctionConfiguration
+    - ListFunctions
+    - RemovePermission
+    - UpdateFunctionCode
+    - UpdateFunctionConfiguration
+- s3:
+    - GetObject
 
 ## Running the Templates Separately
 
 If the permissions you need to deploy Syntinel are spread across multiple roles, run each template in the "stacks" directory individually in the following order : 
 
-* cft-syntinel-init
-* cft-syntinel-iam
-* cft-syntinel-database
-* cft-syntinel-lambda
-* cft-syntinel-apigateway
-* cft-syntinel-autoupdater (optional)
+- cft-syntinel-init
+- cft-syntinel-iam
+- cft-syntinel-database
+- cft-syntinel-lambda
+- cft-syntinel-apigateway
+- cft-syntinel-autoupdater (optional)
 
 ## Template Variables
 
