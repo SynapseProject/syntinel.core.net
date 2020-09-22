@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates the necessary lambda functions and bucket permissions to allow lambdas to be automatically updated.
+Parameters:
+  ##### Lambda Function IAM Roles #####
+  IamCloudStackName:
+    Type: String
+    Description: (Conditional) The name for the cloudformation stack used to create the IAM policies.  Required if Global and Local Roles not provided.
+  GlobalCoreRole:
+    Type: String
+    Default: "syntinel-core-role"
+    Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the CloudFormation stack.
+  LocalLambdaRoleAutoUpdater:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda auto-updater function.  This overrides any Global roles or roles from the CloudFormation stack.
+
+  ##### Lambda Function Names
+  AutoUpdateFunctionName:
+    Type: String
+    Default: syntinel-lambda-autoupdate
+    Description: The name for the function that monitors the s3 bucket for newly uploaded lambda source code zipfile.
+  
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "IAM Roles (Conditional.  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
+      Parameters:
+      - IamCloudStackName
+      - GlobalCoreRole
+      - LocalLambdaRoleAutoUpdater
+    - Label:
+        default: "Lambda Function Name (Required)"
+      Parameters:
+      - AutoUpdateFunctionName
+
+Conditions:
+    GlobalIamRoleProvided : !Not [ !Equals [!Ref GlobalCoreRole, ""] ]
+    LocalLambdaRoleAutoUpdaterProvided : !Not [ !Equals [!Ref LocalLambdaRoleAutoUpdater, ""] ]
+    
+Resources: 
+  ### Lambda Function
+  SyntinelAutoUpdateFunction:
+    Type: AWS::Lambda::Function
+    Condition: CreateUpdateFunction
+    Properties:
+      FunctionName: !Ref AutoUpdateFunctionName
+      Description: Updates Lambda functions when new zipfile is uploaded to the s3 bucket/key specified.
+      Role: !If [ LocalLambdaRoleAutoUpdaterProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleAutoUpdater}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Code:
+        ZipFile: |
+          import json
+          import sys
+          import os
+          import boto3
+
+          def lambda_handler(event, context):
+              lambdaFunctions = os.environ["lambdaFunctions"]
+              lambdaFunctions = lambdaFunctions.split(',')
+              s3Bucket = os.environ["s3Bucket"]
+              s3Key = os.environ["s3Key"]
+
+              print(json.dumps(event))
+              client = boto3.client("lambda")
+              for function in lambdaFunctions:
+                  response = client.update_function_code(
+                      FunctionName=function,
+                      S3Bucket=s3Bucket,
+                      S3Key=s3Key,
+                      Publish=True
+                  )
+                  print(f"Function [{function}] Has Been Updated. {json.dumps(response)}")
+
+              return {
+                  'statusCode': 200
+              }
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      Timeout: 60
+      Environment:
+        Variables:
+          lambdaFunctions: !Join
+            - ','
+            - - !Ref SyntinelProcessSignalFunction
+              - !Ref SyntinelProcessCueFunction
+              - !Ref SyntinelProcessStatusFunction
+              - !Ref SyntinelSignalPublisherTeams
+              - !Ref SyntinelCueSubscriberTeams
+              - !Ref SyntinelSignalPublisherSlack
+              - !Ref SyntinelCueSubscriberSlack
+          s3Bucket: !Ref SyntinelCodeBucketName
+          s3Key: !Ref SyntinelCodeBucketKey
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+

@@ -1,0 +1,309 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Runs all the individual templates to create the entire Syntinel application.
+
+Parameters:
+  ### S3 Locations
+  S3BucketName:
+    Type: String
+    Default: -----YourBucketNameHere-----
+    Description: (Required) The name for the S3 bucket that contains the cloudformation tempates and lambda code.
+  S3BucketPrefix:
+    Type: String
+    Description: (Optional) The S3 prefix (folder path) added to each template path.  DO NOT INCLUDE LEADING OR TRAILING SLASHES.
+  S3BucketLambdaCodeKey:
+    Type: String
+    Default: code/Syntinel.Aws.zip
+    Description: (Required) The S3 Key for the zip file containing the lambda DotNet Core code.
+
+  ### Template Names
+  InitTemplate:
+    Type: String
+    Default: cf-templates/stacks/cft-syntinel-init.yaml
+    Description: (Required) The path to the template file for initializing Syntinel.  DO NOT INCLUDE LEADING SLASHES.
+  IamTemplate:
+    Type: String
+    Default: cf-templates/stacks/cft-syntinel-iam.yaml
+    Description: (Required) The path to the template file for creating IAM policies and roles used by Syntinel.  DO NOT INCLUDE LEADING SLASHES.
+  DatabaseTemplate:
+    Type: String
+    Default: cf-templates/stacks/cft-syntinel-database.yaml
+    Description: (Required) The path to the template file for creating the database tables used by Syntinel.  DO NOT INCLUDE LEADING SLASHES.
+  LambdaTemplate:
+    Type: String
+    Default: cf-templates/stacks/cft-syntinel-lambda.yaml
+    Description: (Required) The path to the template file for creating the lambda functions used by Syntinel.  DO NOT INCLUDE LEADING SLASHES.
+  ApiGatewayTemplate:
+    Type: String
+    Default: cf-templates/stacks/cft-syntinel-apigateway.yaml
+    Description: (Required) The path to the template file for creating the API Gateway resources used by Syntinel.  DO NOT INCLUDE LEADING SLASHES.
+
+  ### Api Gateway
+  ApiGatewayStageName:
+    Type: String
+    Default: syntinel
+    Description: (Required) The stage name for the API Gateway Deployment.
+  DeployToStage:
+    Type: String
+    Default: true
+    AllowedValues: [true, false]
+    Description: (Required) Deploy the API Gateway to stage.
+
+  ### Iam Roles and Policies
+  SyntinelCoreManagedPolicyName:
+    Type: String
+    Default: syntinel-core-policy
+    Description: (Required) The name for the policy that grants access to all parts of the relay tier for Syntinel.
+  SyntinelCoreRoleName:
+    Type: String
+    Default: syntinel-core-role
+    Description: (Required) The name for the role allowing lambda to work with API Gateway.
+  PolicyPermissionBoundry:
+    Type: String
+#    Default: xxxxxxxxxxxxxxxx
+    Description: (Optional) If a policy permission boundry is required, please enter the full arn here.
+
+  ### Dynamo Database Table Names
+  ReportersTableName:
+    Type: String
+    Default: syntinel-reporters
+    Description: (Required) The name for the DynamoDB table that contains information about the reporters (Who sent the signal).
+  SignalsTableName:
+    Type: String
+    Default: syntinel-signals
+    Description: (Required) The name for the DynamoDB table that contains the signal messages and any replies received.
+  ChannelsTableName:
+    Type: String
+    Default: syntinel-channels
+    Description: (Required) The name for the DynamoDB table that contains the channel descriptions and configuration.
+  RouterTableName:
+    Type: String
+    Default: syntinel-router
+    Description: (Required) The name for the DynamoDB table that contains the mapping between reporters and channels based on provided routing criteria.
+  TemplatesTableName:
+    Type: String
+    Default: syntinel-templates
+    Description: (Required) The name for the DynamoDB table that contains templates that can be accessed and used in the Syntinel flow.
+
+
+  ### Lambda Functions
+    # IAM Role Overrides
+  GlobalCoreRole:
+    Type: String
+    Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the IAM CloudFormation stack.
+  LocalLambdaRoleProcessSignal:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process signal lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleProcessCue:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process cue lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleProcessStatus:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the process status lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleTeamsPublisher:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the Teams Channel Publisher lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleTeamsSubscriber:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the Teams Channel Subscriber lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleSlackPublisher:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the Slack Channel Publisher lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleSlackSubscriber:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the Slack Channel Subscriber lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  
+    # Function Names
+  ProcessSignalFunctionName:
+    Type: String
+    Default: syntinel-process-signal
+    Description: (Required) The name for the function that receives and processes signals from reporters.
+  ProcessCueFunctionName:
+    Type: String
+    Default: syntinel-process-cue
+    Description: (Required) The name for the function that receives and processes signals from reporters.
+  ProcessStatusFunctionName:
+    Type: String
+    Default: syntinel-process-status
+    Description: (Required) The name for the function that receives and processes signals from reporters.
+  
+    # Channel Prefixes
+  ChannelPublisherPrefix:
+    Type: String
+    Default: syntinel-signal-publisher
+    Description: (Required) The prefix name for the functions that send signal messages out to channels.  (Example = syntinel-signal-publisher-slack)
+  ChannelSubscriberPrefix:
+    Type: String
+    Default: syntinel-cue-subscriber
+    Description: (Required) The prefix name for the functions that receive cue messages from the channels.  (Example = syntinel-cue-subscriber-slack)
+
+  ### Api Gateway - Lambda Function ARN Overrides
+  SignalLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Signal messages. Overrides value from CloudStack.
+  CueLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Cue messages. Overrides value from CloudStack.
+  StatusLambdaProcessorArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that processes Status messages. Overrides value from CloudStack.
+  TeamsSubscriberLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that receives messages from Teams. Overrides value from CloudStack.
+  SlackSubscriberLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that receives messages from Slack. Overrides value from CloudStack.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "S3 Configurations"
+      Parameters:
+      - S3BucketName
+      - S3BucketPrefix
+      - S3BucketLambdaCodeKey
+    - Label:
+        default: "Cloud Formation Templates"
+      Parameters:
+      - InitTemplate
+      - IamTemplate
+      - DatabaseTemplate
+      - LambdaTemplate
+      - ApiGatewayTemplate
+    - Label:
+        default: "IAM Policies and Roles"
+      Parameters:
+      - SyntinelCoreManagedPolicyName
+      - SyntinelCoreRoleName
+      - PolicyPermissionBoundry
+    - Label:
+        default: "API Gateway Configurations"
+      Parameters:
+      - ApiGatewayStageName
+      - DeployToStage
+    - Label:
+        default: "Database Tables"
+      Parameters:
+      - ReportersTableName
+      - SignalsTableName
+      - ChannelsTableName
+      - RouterTableName
+      - TemplatesTableName
+    - Label:
+        default: "Lambda Function Names and Prefixes"
+      Parameters:
+      - ProcessSignalFunctionName
+      - ProcessCueFunctionName
+      - ProcessStatusFunctionName
+      - ChannelPublisherPrefix
+      - ChannelSubscriberPrefix
+    - Label:
+        default: "ADVANCED : Lambda IAM Overrides.  These variables override the IAM Roles and Policies created in the IAM template.  They should be left blank in most cases."
+      Parameters:
+      - GlobalCoreRole
+      - LocalLambdaRoleProcessSignal
+      - LocalLambdaRoleProcessCue
+      - LocalLambdaRoleProcessStatus
+      - LocalLambdaRoleTeamsPublisher
+      - LocalLambdaRoleTeamsSubscriber
+      - LocalLambdaRoleSlackPublisher
+      - LocalLambdaRoleSlackSubscriber
+    - Label:
+        default: "ADVANCED : Lambda ARN Overrides for API Gateway.  These variables override the functions created in the Lambda template.  They should be left blank in most cases."
+      Parameters:
+        - SignalLambdaProcessorArn
+        - CueLambdaProcessorArn
+        - StatusLambdaProcessorArn
+        - TeamsSubscriberLambdaArn
+        - SlackSubscriberLambdaArn
+
+Conditions:
+  S3PrefixProvided : !Not [ !Equals [!Ref S3BucketPrefix, ""] ]
+  DeployApi: !Equals [true, !Ref DeployToStage]
+
+Resources:
+  ### Initialize Syntinel
+  SyntinelInitStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref InitTemplate ] ]
+      Parameters:
+        CoreApiGatewayStageName: !Ref ApiGatewayStageName
+        DeployToStage: !Ref DeployToStage
+
+  ### Create IAM Policies and Roles
+  SyntinelIamStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref IamTemplate ] ]
+      Parameters:
+        SyntinelCoreManagedPolicyName: !Ref SyntinelCoreManagedPolicyName
+        SyntinelCoreRoleName: !Ref SyntinelCoreRoleName
+        PolicyPermissionBoundry: !Ref PolicyPermissionBoundry
+
+  ### Create Database Tables
+  SyntinelDatabaseStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref DatabaseTemplate ] ]
+      Parameters:
+        ReportersTableName: !Ref ReportersTableName
+        SignalsTableName: !Ref SignalsTableName
+        ChannelsTableName: !Ref ChannelsTableName
+        RouterTableName: !Ref RouterTableName
+        TemplatesTableName: !Ref TemplatesTableName
+
+  ### Create Lambda Functions
+  SyntinelLambdaStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref LambdaTemplate ] ]
+      Parameters:
+        IamCloudStackName: !GetAtt [ SyntinelIamStack, Outputs.StackName ]
+        GlobalCoreRole: !Ref GlobalCoreRole
+        LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
+        LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
+        LocalLambdaRoleProcessStatus: !Ref LocalLambdaRoleProcessStatus
+        LocalLambdaRoleTeamsPublisher: !Ref LocalLambdaRoleTeamsPublisher
+        LocalLambdaRoleTeamsSubscriber: !Ref LocalLambdaRoleTeamsSubscriber
+        LocalLambdaRoleSlackPublisher: !Ref LocalLambdaRoleSlackPublisher
+        LocalLambdaRoleSlackSubscriber: !Ref LocalLambdaRoleSlackSubscriber
+        SyntinelCodeBucketName: !Ref S3BucketName
+        SyntinelCodeBucketKey: !Join [ "", [ !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref S3BucketLambdaCodeKey ] ]
+        ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
+        ProcessCueFunctionName: !Ref ProcessCueFunctionName
+        ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+        ReportersTableName: !Ref ReportersTableName
+        SignalsTableName: !Ref SignalsTableName
+        ChannelsTableName: !Ref ChannelsTableName
+        RouterTableName: !Ref RouterTableName
+        TemplatesTableName: !Ref TemplatesTableName
+        ChannelPublisherPrefix: !Ref ChannelPublisherPrefix
+        ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
+
+  ### Create API Gateway Resources (and Optionally Deploy To Stage)
+  SyntinelApiGatewayStack:
+    Type:  AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref ApiGatewayTemplate ] ]
+      Parameters:
+        InitCloudStackName: !GetAtt [ SyntinelInitStack, Outputs.StackName ]
+        LambdaCloudStackName: !GetAtt [ SyntinelLambdaStack, Outputs.StackName ]
+        SignalLambdaProcessorArn: !Ref SignalLambdaProcessorArn
+        CueLambdaProcessorArn: !Ref CueLambdaProcessorArn
+        StatusLambdaProcessorArn: !Ref StatusLambdaProcessorArn
+        TeamsSubscriberLambdaArn: !Ref TeamsSubscriberLambdaArn
+        SlackSubscriberLambdaArn: !Ref SlackSubscriberLambdaArn
+        ApiGatewayStageName: !Ref ApiGatewayStageName
+        DeployToStage: !Ref DeployToStage
+
+Outputs:
+  StackName:
+    Description: The name of this stack.
+    Value:  !Ref AWS::StackName
+
+  InvokeUrl:
+    Description: The invocation URL of the deployment.
+    Value: !Join ["", [ "https://", !GetAtt [ SyntinelInitStack, Outputs.ApiGateway ], ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref ApiGatewayStageName ] ]
+    Export:
+      Name: !Sub "${AWS::StackName}-InvokeUrl"
