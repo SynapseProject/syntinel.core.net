@@ -11,6 +11,7 @@ Parameters:
     Description: The name for the role allowing lambda to work with API Gateway.
   PolicyPermissionBoundry:
     Type: String
+#    Default: xxxxxxxxxxxxxxxx
     Description: If a policy permission boundry is required, please enter the full arn here.
 Metadata:
   AWS::CloudFormation::Interface:
