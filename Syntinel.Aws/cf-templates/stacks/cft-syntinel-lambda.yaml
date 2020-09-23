@@ -30,6 +30,9 @@ Parameters:
   LocalLambdaRoleSlackSubscriber:
     Type: String
     Description: (Optional) The name of the role to be used only with the Slack Channel Subscriber lambda function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleUpdateLambdaFunctions:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda auto-updater function.  This overrides any Global roles or roles from the CloudFormation stack.
 
   ##### Lambda Function DotNet Core Code Locations
   SyntinelCodeBucketName:
@@ -54,6 +57,10 @@ Parameters:
     Type: String
     Default: syntinel-process-status
     Description: The name for the function that receives and processes signals from reporters.
+  UpdateLambdaFunctionsName:
+    Type: String
+    Default: syntinel-lambda-update
+    Description: (Required) The name for the function that updates lambda functions from the s3 bucket.
   
   ##### Dynamo Database Table Names
   ReportersTableName:
@@ -107,12 +114,14 @@ Metadata:
       - LocalLambdaRoleTeamsSubscriber
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
+      - LocalLambdaRoleUpdateLambdaFunctions
     - Label:
         default: "Core Lambda Function Names (Required)"
       Parameters:
       - ProcessSignalFunctionName
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
+      - UpdateLambdaFunctionsName
     - Label:
         default: "Channel Specific Lambda Function Prefixes (Required)"
       Parameters:
@@ -126,6 +135,7 @@ Metadata:
       - ChannelsTableName
       - RouterTableName
       - TemplatesTableName
+
 Conditions:
     GlobalIamRoleProvided : !Not [ !Equals [!Ref GlobalCoreRole, ""] ]
     LocalIamRoleProcessSignalProvided : !Not [ !Equals [!Ref LocalLambdaRoleProcessSignal, ""] ]
@@ -135,6 +145,7 @@ Conditions:
     LocalIamRoleTeamsSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleTeamsSubscriber, ""] ]
     LocalIamRoleSlackPublisherProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackPublisher, ""] ]
     LocalIamRoleSlackSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackSubscriber, ""] ]
+    LocalLambdaRoleUpdateLambdaFunctionsProvided : !Not [ !Equals [!Ref LocalLambdaRoleUpdateLambdaFunctions, ""] ]
     
 Resources: 
   ##### Core Functions
@@ -322,22 +333,82 @@ Resources:
           Syntinel_ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
           Syntinel_ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
 
+  ##### Admin Functions - Update Lambdas
+  SyntinelLambdaUpdateFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref UpdateLambdaFunctionsName
+      Description: Updates Lambda functions from the zipfile in the s3 bucket/key specified.
+      Role: !If [ LocalLambdaRoleUpdateLambdaFunctionsProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleUpdateLambdaFunctions}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
+      Code:
+        ZipFile: |
+          import json
+          import sys
+          import os
+          import boto3
+
+          def lambda_handler(event, context):
+              lambdaFunctions = os.environ["lambdaFunctions"]
+              lambdaFunctions = lambdaFunctions.split(',')
+              s3Bucket = os.environ["s3Bucket"]
+              s3Key = os.environ["s3Key"]
+
+              print(json.dumps(event))
+              client = boto3.client("lambda")
+              reply = {}
+              status = "Success"
+              errorCount = 0
+              for function in lambdaFunctions:
+                  try:
+                      response = client.update_function_code(
+                          FunctionName=function,
+                          S3Bucket=s3Bucket,
+                          S3Key=s3Key,
+                          Publish=True
+                      )
+                      reply[function] = response
+                      print(f"Function [{function}] Has Been Updated. {json.dumps(response)}")
+                  except Exception as e:
+                      status = "SuccessWithErrors"
+                      errorCount += 1
+                      error = {
+                          "error": str(e)
+                      }
+                      print(f"Function [{function}] Failed To Update. {json.dumps(error)}")
+                      reply[function] = error
+                      
+              if len(lambdaFunctions) == errorCount:
+                  status = "Error"
+
+              response = {
+                  'status': status,
+                  'body' : reply
+              }
+
+              print(json.dumps(response))
+              return response
+
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      Timeout: 60
+      Environment:
+        Variables:
+          lambdaFunctions: !Join
+            - ','
+            - - !Ref SyntinelProcessSignalFunction
+              - !Ref SyntinelProcessCueFunction
+              - !Ref SyntinelProcessStatusFunction
+              - !Ref SyntinelSignalPublisherTeams
+              - !Ref SyntinelCueSubscriberTeams
+              - !Ref SyntinelSignalPublisherSlack
+              - !Ref SyntinelCueSubscriberSlack
+          s3Bucket: !Ref SyntinelCodeBucketName
+          s3Key: !Ref SyntinelCodeBucketKey
+
 Outputs:
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName
-
-  S3CodeBucketName:
-    Description: The name of s3 bucket holding the lambda code zip file.
-    Value: !Ref SyntinelCodeBucketName
-    Export:
-      Name: !Sub "${AWS::StackName}-S3CodeBucketName"
-
-  S3CodeBucketKey:
-    Description: The s3 key of lambda code zip file.
-    Value: !Ref SyntinelCodeBucketKey
-    Export:
-      Name: !Sub "${AWS::StackName}-S3CodeBucketKey"
 
   # Core - Process Signal
   ProcessSignalFunctionName:
@@ -499,4 +570,27 @@ Outputs:
         - Arn
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelCueSubscriberSlackUrl"
+  
+  # Admin - Update Lambdas
+  LambdaUpdateFunctionName:
+    Description: The name of the lambda function to update lambda functions from the s3 bucket zipfile.
+    Value: !Ref SyntinelLambdaUpdateFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaUpdateFunctionName"
+  LambdaUpdateFunctionnArn:
+    Description: The ARN of the lambda function to update lambda functions from the s3 bucket zipfile.
+    Value: !GetAtt
+        - SyntinelLambdaUpdateFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaUpdateFunctionArn"
+  LambdaUpdateFunctionUrl:
+    Description: The URL of the lambda function update lambda functions from the s3 bucket zipfile (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelLambdaUpdateFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelLambdaUpdateFunctionUrl"
   
