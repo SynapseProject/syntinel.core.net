@@ -327,6 +327,18 @@ Outputs:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName
 
+  S3CodeBucketName:
+    Description: The name of s3 bucket holding the lambda code zip file.
+    Value: !Ref SyntinelCodeBucketName
+    Export:
+      Name: !Sub "${AWS::StackName}-S3CodeBucketName"
+
+  S3CodeBucketKey:
+    Description: The s3 key of lambda code zip file.
+    Value: !Ref SyntinelCodeBucketKey
+    Export:
+      Name: !Sub "${AWS::StackName}-S3CodeBucketKey"
+
   # Core - Process Signal
   ProcessSignalFunctionName:
     Description: The name of the lambda function to process inbound signal messages.

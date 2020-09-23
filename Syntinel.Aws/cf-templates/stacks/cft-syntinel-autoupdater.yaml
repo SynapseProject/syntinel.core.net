@@ -1,13 +1,16 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates the necessary lambda functions and bucket permissions to allow lambdas to be automatically updated.
 Parameters:
-  ##### Lambda Function IAM Roles #####
+  ##### Stack Names #####
   IamCloudStackName:
     Type: String
     Description: (Conditional) The name for the cloudformation stack used to create the IAM policies.  Required if Global and Local Roles not provided.
+  LambdaStackName:
+    Type: String
+    Description: (Conditional) The name for the cloudformation stack used to create lambda functions.
+  ##### Lambda Function IAM Roles #####
   GlobalCoreRole:
     Type: String
-    Default: "syntinel-core-role"
     Description: (Conditional) The name of the role to be used with ALL the core lambda functions.  This overrides any roles from the CloudFormation stack.
   LocalLambdaRoleAutoUpdater:
     Type: String
@@ -17,15 +20,19 @@ Parameters:
   AutoUpdateFunctionName:
     Type: String
     Default: syntinel-lambda-autoupdate
-    Description: The name for the function that monitors the s3 bucket for newly uploaded lambda source code zipfile.
+    Description: (Required) The name for the function that monitors the s3 bucket for newly uploaded lambda source code zipfile.
   
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
     - Label:
-        default: "IAM Roles (Conditional.  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
+        default: "(Required) The Cloud Formation Stacks that created the Lambda and Iam Roles"
       Parameters:
       - IamCloudStackName
+      - LambdaStackName
+    - Label:
+        default: "IAM Roles (Conditional).  Either IamCloudStackName, GlobalCoreRole or ALL Local Roles are required.  Roles are used in the following order if provided : Local Role, Global Role, Role From Cloud Stack.)"
+      Parameters:
       - GlobalCoreRole
       - LocalLambdaRoleAutoUpdater
     - Label:
@@ -41,11 +48,10 @@ Resources:
   ### Lambda Function
   SyntinelAutoUpdateFunction:
     Type: AWS::Lambda::Function
-    Condition: CreateUpdateFunction
     Properties:
       FunctionName: !Ref AutoUpdateFunctionName
       Description: Updates Lambda functions when new zipfile is uploaded to the s3 bucket/key specified.
-      Role: !If [ LocalLambdaRoleAutoUpdaterProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleAutoUpdater}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelLambdaRoleArn" } } ] ]
+      Role: !If [ LocalLambdaRoleAutoUpdaterProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleAutoUpdater}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
       Code:
         ZipFile: |
           import json
@@ -80,15 +86,15 @@ Resources:
         Variables:
           lambdaFunctions: !Join
             - ','
-            - - !Ref SyntinelProcessSignalFunction
-              - !Ref SyntinelProcessCueFunction
-              - !Ref SyntinelProcessStatusFunction
-              - !Ref SyntinelSignalPublisherTeams
-              - !Ref SyntinelCueSubscriberTeams
-              - !Ref SyntinelSignalPublisherSlack
-              - !Ref SyntinelCueSubscriberSlack
-          s3Bucket: !Ref SyntinelCodeBucketName
-          s3Key: !Ref SyntinelCodeBucketKey
+            - - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelProcessSignalFunctionName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelProcessCueFunctionName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelProcessStatusFunctionName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelSignalPublisherTeamsName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelCueSubscriberTeamsName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelSignalPublisherSlackName" } }
+              - { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-SyntinelCueSubscriberSlackName" } }
+          s3Bucket: { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-S3CodeBucketName" } }
+          s3Key: { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaStackName}-S3CodeBucketKey" } }
 
 Outputs:
   StackName:
