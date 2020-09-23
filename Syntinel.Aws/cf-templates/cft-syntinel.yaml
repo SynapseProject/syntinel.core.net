@@ -223,7 +223,7 @@ Conditions:
 
 Resources:
   ### Initialize Syntinel
-  SyntinelInitStack:
+  InitStack:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref InitTemplate ] ]
@@ -232,7 +232,7 @@ Resources:
         DeployToStage: !Ref DeployToStage
 
   ### Create IAM Policies and Roles
-  SyntinelIamStack:
+  IamStack:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref IamTemplate ] ]
@@ -242,7 +242,7 @@ Resources:
         PolicyPermissionBoundry: !Ref PolicyPermissionBoundry
 
   ### Create Database Tables
-  SyntinelDatabaseStack:
+  DatabaseStack:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref DatabaseTemplate ] ]
@@ -254,12 +254,12 @@ Resources:
         TemplatesTableName: !Ref TemplatesTableName
 
   ### Create Lambda Functions
-  SyntinelLambdaStack:
+  LambdaStack:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref LambdaTemplate ] ]
       Parameters:
-        IamCloudStackName: !GetAtt [ SyntinelIamStack, Outputs.StackName ]
+        IamCloudStackName: !GetAtt [ IamStack, Outputs.StackName ]
         GlobalCoreRole: !Ref GlobalCoreRole
         LocalLambdaRoleProcessSignal: !Ref LocalLambdaRoleProcessSignal
         LocalLambdaRoleProcessCue: !Ref LocalLambdaRoleProcessCue
@@ -282,13 +282,13 @@ Resources:
         ChannelSubscriberPrefix: !Ref ChannelSubscriberPrefix
 
   ### Create API Gateway Resources (and Optionally Deploy To Stage)
-  SyntinelApiGatewayStack:
+  ApiGatewayStack:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref ApiGatewayTemplate ] ]
       Parameters:
-        InitCloudStackName: !GetAtt [ SyntinelInitStack, Outputs.StackName ]
-        LambdaCloudStackName: !GetAtt [ SyntinelLambdaStack, Outputs.StackName ]
+        InitCloudStackName: !GetAtt [ InitStack, Outputs.StackName ]
+        LambdaCloudStackName: !GetAtt [ LambdaStack, Outputs.StackName ]
         SignalLambdaProcessorArn: !Ref SignalLambdaProcessorArn
         CueLambdaProcessorArn: !Ref CueLambdaProcessorArn
         StatusLambdaProcessorArn: !Ref StatusLambdaProcessorArn
@@ -304,6 +304,6 @@ Outputs:
 
   InvokeUrl:
     Description: The invocation URL of the deployment.
-    Value: !Join ["", [ "https://", !GetAtt [ SyntinelInitStack, Outputs.ApiGateway ], ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref ApiGatewayStageName ] ]
+    Value: !Join ["", [ "https://", !GetAtt [ InitStack, Outputs.ApiGateway ], ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref ApiGatewayStageName ] ]
     Export:
       Name: !Sub "${AWS::StackName}-InvokeUrl"
