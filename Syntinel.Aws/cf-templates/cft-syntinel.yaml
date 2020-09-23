@@ -111,6 +111,9 @@ Parameters:
   LocalLambdaRoleSlackSubscriber:
     Type: String
     Description: (Optional) The name of the role to be used only with the Slack Channel Subscriber lambda function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleUpdateLambdaFunctions:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the update lambda functions function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
   
     # Function Names
   ProcessSignalFunctionName:
@@ -125,7 +128,13 @@ Parameters:
     Type: String
     Default: syntinel-process-status
     Description: (Required) The name for the function that receives and processes signals from reporters.
-  
+  UpdateLambdaFunctionsName:
+    Type: String
+    Default: syntinel-lambda-update
+    Description: (Required) The name for the function that updates lambda functions from the s3 bucket.
+
+
+
     # Channel Prefixes
   ChannelPublisherPrefix:
     Type: String
@@ -152,6 +161,9 @@ Parameters:
   SlackSubscriberLambdaArn:
     Type: String
     Description: (Optional) The ARN for the Lambda function that receives messages from Slack. Overrides value from CloudStack.
+  UpdateLambdaFunctionsArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that updates lambda functions from S3. Overrides value from CloudStack.
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -195,6 +207,7 @@ Metadata:
       - ProcessSignalFunctionName
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
+      - UpdateLambdaFunctionsName
       - ChannelPublisherPrefix
       - ChannelSubscriberPrefix
     - Label:
@@ -208,6 +221,7 @@ Metadata:
       - LocalLambdaRoleTeamsSubscriber
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
+      - LocalLambdaRoleUpdateLambdaFunctions
     - Label:
         default: "ADVANCED : Lambda ARN Overrides for API Gateway.  These variables override the functions created in the Lambda template.  They should be left blank in most cases."
       Parameters:
@@ -216,6 +230,7 @@ Metadata:
         - StatusLambdaProcessorArn
         - TeamsSubscriberLambdaArn
         - SlackSubscriberLambdaArn
+        - UpdateLambdaFunctionsArn
 
 Conditions:
   S3PrefixProvided : !Not [ !Equals [!Ref S3BucketPrefix, ""] ]
@@ -268,11 +283,13 @@ Resources:
         LocalLambdaRoleTeamsSubscriber: !Ref LocalLambdaRoleTeamsSubscriber
         LocalLambdaRoleSlackPublisher: !Ref LocalLambdaRoleSlackPublisher
         LocalLambdaRoleSlackSubscriber: !Ref LocalLambdaRoleSlackSubscriber
+        LocalLambdaRoleUpdateLambdaFunctions: !Ref LocalLambdaRoleUpdateLambdaFunctions
         SyntinelCodeBucketName: !Ref S3BucketName
         SyntinelCodeBucketKey: !Join [ "", [ !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref S3BucketLambdaCodeKey ] ]
         ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
         ProcessCueFunctionName: !Ref ProcessCueFunctionName
         ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
+        UpdateLambdaFunctionsName: !Ref UpdateLambdaFunctionsName
         ReportersTableName: !Ref ReportersTableName
         SignalsTableName: !Ref SignalsTableName
         ChannelsTableName: !Ref ChannelsTableName
@@ -294,6 +311,7 @@ Resources:
         StatusLambdaProcessorArn: !Ref StatusLambdaProcessorArn
         TeamsSubscriberLambdaArn: !Ref TeamsSubscriberLambdaArn
         SlackSubscriberLambdaArn: !Ref SlackSubscriberLambdaArn
+        UpdateLambdaFunctionsArn: !Ref UpdateLambdaFunctionsArn
         ApiGatewayStageName: !Ref ApiGatewayStageName
         DeployToStage: !Ref DeployToStage
 
