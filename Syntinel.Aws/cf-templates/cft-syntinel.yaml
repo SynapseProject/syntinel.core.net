@@ -242,9 +242,6 @@ Resources:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref InitTemplate ] ]
-      Parameters:
-        CoreApiGatewayStageName: !Ref ApiGatewayStageName
-        DeployToStage: !Ref DeployToStage
 
   ### Create IAM Policies and Roles
   IamStack:

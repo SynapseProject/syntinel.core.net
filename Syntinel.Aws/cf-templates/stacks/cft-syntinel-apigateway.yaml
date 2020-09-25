@@ -84,7 +84,6 @@ Conditions:
   DeployApi: !Equals [true, !Ref DeployToStage]
 
 Resources:
-
   # Models
   SignalModel: 
     Type: AWS::ApiGateway::Model
@@ -537,9 +536,6 @@ Resources:
         Uri: !If [ UpdateLambdaFunctionsArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateLambdaFunctionsArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelLambdaUpdateFunctionUrl" } } ]
         IntegrationResponses:
         - StatusCode: 200
-#      RequestValidatorId: !Ref BodyRequestValidator
-#      RequestModels:
-#        application/json: !Ref SignalModel
       MethodResponses:
       - StatusCode: 200
         ResponseModels:
@@ -596,6 +592,9 @@ Resources:
       SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
 
   # Deploy To Stage
+  # *********************************************************************
+  # ***** Don't Forget To Update DependsOn When Adding More Methods *****
+  # *********************************************************************
   SyntinelDeployment:
     Type: AWS::ApiGateway::Deployment
     Condition: DeployApi
@@ -607,6 +606,7 @@ Resources:
     - TeamsCueMethod
     - SlackHelloWorldMethod
     - SlackCueMethod
+    - AdminUpdateLambdas
     Properties:
       RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
       StageName: !Ref ApiGatewayStageName
