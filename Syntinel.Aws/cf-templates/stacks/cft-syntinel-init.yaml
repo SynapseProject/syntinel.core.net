@@ -9,7 +9,7 @@ Parameters:
     Description: (Required) The stage name for the API Gateway Deployment.
   DeployToStage:
     Type: String
-    Default: true
+    Default: false
     AllowedValues: [true, false]
     Description: (Required) Deploy API Gateway Methods to Stage.
 
