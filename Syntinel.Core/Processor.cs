@@ -305,6 +305,7 @@ namespace Syntinel.Core
             signal.RouterType = routerType;
             signal.Name = "Status Update";
             signal.Description = $"Id: [{status.Id}], ActionId [{status.ActionId}]";
+            signal.IncludeId = false;
 
             CueOption cue = new CueOption();
             cue.Name = status.NewStatus.ToString();
