@@ -268,8 +268,21 @@ namespace Syntinel.Core
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
             IResolver res = AssemblyLoader.Load<IResolver>(resolver.Name);
-            Status status = res.ProcessRequest(request);
-            status.SendToChannels = resolver.Notify;
+            Status status = new Status();
+            if (res != null)
+            {
+                status = res.ProcessRequest(request);
+                status.SendToChannels = resolver.Notify;
+            }
+            else
+            {
+                status.Id = request.Id;
+                status.ActionId = request.ActionId;
+                status.NewStatus = StatusType.Error;
+                status.Message = $"Resolver [{resolver.Name}] Does Not Exist.";
+                status.SendToChannels = resolver.Notify;
+            }
+
             ProcessStatus(status);
         }
 
