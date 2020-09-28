@@ -34,6 +34,9 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "defaultCueTimeout")]
         public int DefaultCueTimeout { get; set; }
+
+        [JsonProperty(PropertyName = "includeId")]
+        public bool IncludeId { get; set; } = true;
     }
 
     public class CueOption
