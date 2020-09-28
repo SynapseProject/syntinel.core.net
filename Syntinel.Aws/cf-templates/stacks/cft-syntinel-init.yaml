@@ -1,29 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Creates and deploys the initial API, Resources and Stage for running the Syntinel application.
-
-Parameters:
-  ### Api Gateway
-  CoreApiGatewayStageName:
-    Type: String
-    Default: syntinel
-    Description: (Required) The stage name for the API Gateway Deployment.
-  DeployToStage:
-    Type: String
-    Default: true
-    AllowedValues: [true, false]
-    Description: (Required) Deploy API Gateway Methods to Stage.
-
-Metadata:
-  AWS::CloudFormation::Interface:
-    ParameterGroups:
-    - Label:
-        default: "ADVANCED CONFIGURATION: API Gateway Variables"
-      Parameters:
-      - CoreApiGatewayStageName
-      - DeployToStage
-
-Conditions:
-  DeployApi: !Equals [true, !Ref DeployToStage]
+Description: Creates the initial RestApi for running the Syntinel application.
 
 Resources:
   # Main Rest API
@@ -58,15 +34,6 @@ Resources:
         ResponseModels:
           application/json: Empty
 
-  # Deploy To Stage
-  SyntinelDeployment:
-    Type: AWS::ApiGateway::Deployment
-    Condition: DeployApi
-    DependsOn: HelloWorldMethod
-    Properties:
-      RestApiId: !Ref RestApi
-      StageName: !Ref CoreApiGatewayStageName
-
 Outputs:
   StackName:
     Description: The name of this stack.
@@ -85,9 +52,3 @@ Outputs:
         - RootResourceId
     Export:
       Name: !Sub "${AWS::StackName}-RootResourceId"
-
-  InvokeUrl:
-    Description: The invocation URL of the deployment.
-    Value: !Join ["", [ "https://", !Ref RestApi, ".execute-api.", !Ref "AWS::Region", ".amazonaws.com/", !Ref CoreApiGatewayStageName ] ]
-    Export:
-      Name: !Sub "${AWS::StackName}-InvokeUrl"

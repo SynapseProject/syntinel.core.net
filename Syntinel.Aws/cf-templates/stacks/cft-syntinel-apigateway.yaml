@@ -34,6 +34,10 @@ Parameters:
     Type: String
     Description: (Optional) The ARN for the Lambda function that receives messages from Slack. Overrides value from CloudStack.
 
+  UpdateLambdaFunctionsArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that updates lambda functions from s3 bucket zipfile. Overrides value from CloudStack.
+
   ##### API Gateway Variables #####
   ApiGatewayStageName:
     Type: String
@@ -68,6 +72,7 @@ Metadata:
       - StatusLambdaProcessorArn
       - TeamsSubscriberLambdaArn
       - SlackSubscriberLambdaArn
+      - UpdateLambdaFunctionsArn
 
 Conditions:
   SignalLambdaArnProvided : !Not [ !Equals [!Ref SignalLambdaProcessorArn, ""] ]
@@ -75,19 +80,10 @@ Conditions:
   StatusLambdaArnProvided : !Not [ !Equals [!Ref StatusLambdaProcessorArn, ""] ]
   TeamsSubscriberLambdaArnProvided : !Not [ !Equals [!Ref TeamsSubscriberLambdaArn, ""] ]
   SlackSubscriberLambdaArnProvided : !Not [ !Equals [!Ref SlackSubscriberLambdaArn, ""] ]
+  UpdateLambdaFunctionsArnProvided: !Not [ !Equals [!Ref UpdateLambdaFunctionsArn, ""] ]
   DeployApi: !Equals [true, !Ref DeployToStage]
 
 Resources:
-#  # Main Rest API
-#  RestApi:
-#    Type: AWS::ApiGateway::RestApi
-#    Properties:
-#      Name: syntinel
-#      Description: API Entry points for the Syntinel application.
-#      EndpointConfiguration:
-#        Types:
-#        - REGIONAL
-
   # Models
   SignalModel: 
     Type: AWS::ApiGateway::Model
@@ -240,6 +236,20 @@ Resources:
       RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
       ParentId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-RootResourceId" } }
       PathPart: admin
+
+  ConfigResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref AdminResource
+      PathPart: config
+
+  LambdaResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref ConfigResource
+      PathPart: lambda
 
   CueResource:
     Type: AWS::ApiGateway::Resource
@@ -512,6 +522,26 @@ Resources:
         ResponseModels:
           application/json: Empty
 
+  # AdminMethods
+  AdminUpdateLambdas:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref LambdaResource
+      HttpMethod: PATCH
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ UpdateLambdaFunctionsArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateLambdaFunctionsArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelLambdaUpdateFunctionUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+
   # Grant ApiGateway Permission To Call The Lambda Functions
   SyntinelProcessSignalPermissions:
     Type: AWS::Lambda::Permission
@@ -553,7 +583,18 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
 
+  AdminUpdateLambdasPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ UpdateLambdaFunctionsArnProvided, !Ref UpdateLambdaFunctionsArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelLambdaUpdateFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
+
   # Deploy To Stage
+  # *********************************************************************
+  # ***** Don't Forget To Update DependsOn When Adding More Methods *****
+  # *********************************************************************
   SyntinelDeployment:
     Type: AWS::ApiGateway::Deployment
     Condition: DeployApi
@@ -565,6 +606,7 @@ Resources:
     - TeamsCueMethod
     - SlackHelloWorldMethod
     - SlackCueMethod
+    - AdminUpdateLambdas
     Properties:
       RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
       StageName: !Ref ApiGatewayStageName

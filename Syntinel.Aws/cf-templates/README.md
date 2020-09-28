@@ -67,14 +67,15 @@ This template calls the cloud formation templates in the "stacks" directory, pas
 
 ## Running the Templates Separately
 
-If the permissions you need to deploy Syntinel are spread across multiple roles, run each template in the "stacks" directory individually in the following order : 
+If you are unable (or unwilling) to execute the single template to deploy all parts of the Syntinel application (due to BoundryPolicies, or the permissions are spread across multiple roles) you can run each template in the "stacks" directory individually in the following order (wjth the approprite permissions for each): 
 
 - cft-syntinel-init
 - cft-syntinel-iam
 - cft-syntinel-database
 - cft-syntinel-lambda
 - cft-syntinel-apigateway
-- cft-syntinel-autoupdater (optional)
+
+*For example: My company has split all IAM functions into a single, "privliged" role and all other roles are required to contain a PolicyBoundry that forbids IAM functions.  This means I would have to run the IAM template under that privliged role (iam:\*) while I could run the other templates from another role that contains the rest of the non-iam permission needed.*
 
 ## Template Variables
 
