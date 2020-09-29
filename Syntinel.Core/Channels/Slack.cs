@@ -107,6 +107,14 @@ namespace Syntinel.Core
             else if (signal.Cues == null)
                 message.Text = " ";
 
+            if (signal.IncludeId)
+            {
+                if (String.IsNullOrWhiteSpace(message.Text))
+                    message.Text = $"Id : {request.Id}";
+                else
+                    message.Text += $"\n(Id : {request.Id})";
+            }
+
             if (signal.Cues != null)
             {
                 foreach (string key in signal.Cues.Keys)

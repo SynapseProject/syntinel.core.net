@@ -107,6 +107,13 @@ namespace Syntinel.Core
 
             message.Title = String.IsNullOrEmpty(signal.Name) ? " " : signal.Name;
             message.Text = String.IsNullOrEmpty(signal.Description) ? " " : signal.Description;
+            if (signal.IncludeId)
+            {
+                if (String.IsNullOrWhiteSpace(message.Title))
+                    message.Title = $"Id: {request.Id}";
+                else
+                    message.Title += $" (Id: {request.Id})";
+            }
 
             if (signal.Cues != null)
             {

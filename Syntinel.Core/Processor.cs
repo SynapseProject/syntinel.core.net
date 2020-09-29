@@ -28,6 +28,8 @@ namespace Syntinel.Core
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
             RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType);
+            if (reporter == null)
+                throw new Exception($"Reporter [{reporterId}] Does Not Exist.");
             reporter.LoadChannels(DbEngine, router);
 
             // Retrieve Any CueOption Templates Specified
@@ -170,21 +172,27 @@ namespace Syntinel.Core
             {
                 SignalDbRecord signal = DbEngine.Get<SignalDbRecord>(cue.Id);
                 if (signal == null)
-                    throw new Exception($"Signal [{cue.Id}] Not Found.");
-
-                if (signal.IsActive == false)
-                    throw new Exception($"Signal [{cue.Id}] Is Not Active.");
-
-                CueRequest request = new CueRequest
                 {
-                    ActionId = actionId,
-                    Id = cue.Id,
-                    Cue = cue,
-                    Signal = signal
-                };
+                    reply.StatusCode = StatusCode.Failure;
+                    reply.StatusMessage = $"Signal [{cue.Id}] Not Found.";
+                }
+                else if (signal.IsActive == false)
+                {
+                    reply.StatusCode = StatusCode.NotActive;
+                    reply.StatusMessage = $"Signal [{cue.Id}] Is Not Active.";
+                }
+                else
+                {
+                    CueRequest request = new CueRequest
+                    {
+                        ActionId = actionId,
+                        Id = cue.Id,
+                        Cue = cue,
+                        Signal = signal
+                    };
 
-                SendToCueProcessor(request);
-
+                    SendToCueProcessor(request);
+                }
             }
             catch (Exception e)
             {
@@ -260,8 +268,21 @@ namespace Syntinel.Core
         public virtual void SendToResolver(Resolver resolver, ResolverRequest request)
         {
             IResolver res = AssemblyLoader.Load<IResolver>(resolver.Name);
-            Status status = res.ProcessRequest(request);
-            status.SendToChannels = resolver.Notify;
+            Status status = new Status();
+            if (res != null)
+            {
+                status = res.ProcessRequest(request);
+                status.SendToChannels = resolver.Notify;
+            }
+            else
+            {
+                status.Id = request.Id;
+                status.ActionId = request.ActionId;
+                status.NewStatus = StatusType.Error;
+                status.Message = $"Resolver [{resolver.Name}] Does Not Exist.";
+                status.SendToChannels = resolver.Notify;
+            }
+
             ProcessStatus(status);
         }
 
@@ -305,6 +326,7 @@ namespace Syntinel.Core
             signal.RouterType = routerType;
             signal.Name = "Status Update";
             signal.Description = $"Id: [{status.Id}], ActionId [{status.ActionId}]";
+            signal.IncludeId = false;
 
             CueOption cue = new CueOption();
             cue.Name = status.NewStatus.ToString();

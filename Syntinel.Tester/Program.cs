@@ -23,22 +23,22 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db);
             ILogger logger = new ConsoleLogger();
 
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-UsingTemplate.json", FileMode.Open));
-            string fileStr = reader.ReadToEnd();
-            Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
-
-            SignalReply reply = processor.ProcessSignal(signal);
-            Console.WriteLine($"Status : {reply.StatusCode}");
-            foreach (SignalStatus status in reply.Results)
-                Console.WriteLine($"     {status.ChannelId} : {status.Code} - {status.Message}");
-
-            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-UsingTemplate.json", FileMode.Open));
             //string fileStr = reader.ReadToEnd();
-            //Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
+            //Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
 
-            //Cue cue = Teams.CreateCue(reply);
-            //CueReply cueReply = processor.ReceiveCue(cue);
-            //Console.WriteLine(JsonTools.Serialize(cueReply));
+            //SignalReply reply = processor.ProcessSignal(signal);
+            //Console.WriteLine($"Status : {reply.StatusCode}");
+            //foreach (SignalStatus status in reply.Results)
+            //    Console.WriteLine($"     {status.ChannelId} : {status.Code} - {status.Message}");
+
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
+            string fileStr = reader.ReadToEnd();
+            Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
+
+            Cue cue = Teams.CreateCue(reply);
+            CueReply cueReply = processor.ReceiveCue(cue);
+            Console.WriteLine(JsonTools.Serialize(cueReply));
         }
     }
 }

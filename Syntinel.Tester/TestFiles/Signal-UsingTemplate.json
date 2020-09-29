@@ -3,6 +3,7 @@
   "description": "EC2 Utilization Montior",
   "maxReplies": 1,
   "reporterId": "_default",
+  "includeId": true,
   "cues": {
     "ec2": {
       "template": "ec2",
@@ -12,6 +13,6 @@
       }
     }
   },
-  "defaultCue": "ec2-template",
+  "defaultCue": "ec2",
   "defaultCueTimeout": 4320
 }
