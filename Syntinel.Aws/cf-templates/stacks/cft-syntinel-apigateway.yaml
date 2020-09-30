@@ -130,7 +130,7 @@ Resources:
                                   "properties": {
                                       "name": { "type": "string" },
                                       "description": { "type": "string" },
-                                      "type": { "type": "string" },
+                                      "type": { "type": "string" , "pattern": "^number|text|boolean|choice|multichoice|button|link$"},
                                       "defaultValue": { "type": "string" },
                                       "values": { 
                                           "type": "array",
@@ -152,7 +152,7 @@ Resources:
                                   "properties": {
                                       "name": { "type": "string" },
                                       "description": { "type": "string" },
-                                      "type": { "type": "string" },
+                                      "type": { "type": "string" , "pattern": "^number|text|boolean|choice|multichoice|button|link$"},
                                       "defaultValue": { "type": "string" },
                                       "values": { 
                                           "type": "object",
@@ -168,7 +168,8 @@ Resources:
                   }
               },
               "defaultCue": { "type": "string" },
-              "defaultCueTimeout": { "type": "integer" }
+              "defaultCueTimeout": { "type": "integer" },
+              "includeId": { "type": "boolean" }
           }
         }
 

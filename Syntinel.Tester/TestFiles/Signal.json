@@ -12,9 +12,19 @@
       "resolver": {
         "name": "ec2utils",
         "config": {
-          "instances": [ "i-888888888888" ]
+          "instances": [ "i-888888888888" ],
+          "notify": false
         }
       },
+      "inputs": [
+        {
+          "name": "Enter Comment",
+          "id": "comment",
+          "description": "Choose action to take against EC2 instances.",
+          "type": "text",
+          "defaultValue": "Default Comment Value Here"
+        }
+      ],
       "actions": [
         {
           "name": "Perform Action",
@@ -30,10 +40,10 @@
           "defaultValue": "stop"
         },
         {
-          "name": "Ignore Alert",
-          "description": "Ignore this alert.",
-          "type": "button",
-          "defaultValue": "ignore"
+        "name": "Ignore Alert",
+        "description": "Ignore this alert.",
+        "type": "button",
+        "defaultValue": "ignore"
         },
         {
           "name": "Disable Alert",
@@ -46,5 +56,6 @@
     }
   },
   "defaultCue": "ec2-template",
-  "defaultCueTimeout": 4320
+  "defaultCueTimeout": 4320,
+  "includeId": true
 }

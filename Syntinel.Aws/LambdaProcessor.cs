@@ -25,7 +25,7 @@ namespace Syntinel.Aws
         {
             SignalStatus status = new SignalStatus
             {
-                Type = channel.Type,
+                ChannelType = channel.Type,
                 Code = StatusCode.Success,
                 Message = "Success"
             };

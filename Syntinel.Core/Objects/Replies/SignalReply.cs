@@ -31,8 +31,8 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "channelId")]
         public string ChannelId { get; set; }
 
-        [JsonProperty(PropertyName = "type")]
-        public string Type { get; set; }
+        [JsonProperty(PropertyName = "channelType")]
+        public string ChannelType { get; set; }
 
         [JsonProperty(PropertyName = "message")]
         public string Message { get; set; }

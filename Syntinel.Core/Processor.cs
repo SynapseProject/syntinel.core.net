@@ -116,7 +116,7 @@ namespace Syntinel.Core
             SignalStatus status = new SignalStatus
             {
                 Code = StatusCode.Success,
-                Type = channel.Type,
+                ChannelType = channel.Type,
                 Message = "Success"
             };
 
@@ -260,7 +260,7 @@ namespace Syntinel.Core
 
             signal.Actions.Add(req.ActionId, action);
             signal = DbEngine.Update<SignalDbRecord>(signal, true);
-            request.signal = signal;
+            request.Signal = signal;
             Logger.Info($"Sending To Resolver [{resolver.Name}].  {JsonTools.Serialize(request)}");
             SendToResolver(resolver, request);
         }
