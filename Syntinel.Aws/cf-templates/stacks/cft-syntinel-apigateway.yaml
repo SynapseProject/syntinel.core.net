@@ -96,7 +96,7 @@ Resources:
         {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "type": "object",
-          "required": [ "name", "description", "reporterId" ],
+          "required": [ "reporterId" ],
           "properties": {
               "name": { "type": "string" },
               "description": { "type": "string" },
@@ -148,9 +148,10 @@ Resources:
                               "type": "array",
                               "items": {
                                   "type": "object",
-                                  "required": ["name", "type"],
+                                  "required": ["id", "type"],
                                   "properties": {
                                       "name": { "type": "string" },
+                                      "id": { "type": "string" },
                                       "description": { "type": "string" },
                                       "type": { "type": "string" , "pattern": "^number|text|boolean|choice|multichoice|button|link$"},
                                       "defaultValue": { "type": "string" },

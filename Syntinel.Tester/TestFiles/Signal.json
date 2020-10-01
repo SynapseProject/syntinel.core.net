@@ -40,10 +40,10 @@
           "defaultValue": "stop"
         },
         {
-        "name": "Ignore Alert",
-        "description": "Ignore this alert.",
-        "type": "button",
-        "defaultValue": "ignore"
+          "name": "Ignore Alert",
+          "description": "Ignore this alert.",
+          "type": "button",
+          "defaultValue": "ignore"
         },
         {
           "name": "Disable Alert",
