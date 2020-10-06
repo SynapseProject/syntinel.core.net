@@ -58,7 +58,7 @@ namespace Syntinel.Core
             {
                 if (key != "signalId" && key != "cueId")
                 {
-                    CueVariable variable = new CueVariable();
+                    MultiValueVariable variable = new MultiValueVariable();
                     variable.Name = key;
                     // TODO: Might have to split value by semicolons for multi-value field types.
                     variable.Values.Add((string)reply[key]);
@@ -84,7 +84,7 @@ namespace Syntinel.Core
             {
                 if (key != "callback_id")
                 {
-                    CueVariable variable = new CueVariable();
+                    MultiValueVariable variable = new MultiValueVariable();
                     variable.Name = key;
                     // TOOD: Might have to split value by commans for multi-value field types.
                     variable.Values.Add((string)reply[key]);

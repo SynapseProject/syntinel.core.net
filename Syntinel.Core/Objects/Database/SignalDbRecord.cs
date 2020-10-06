@@ -26,7 +26,7 @@ namespace Syntinel.Core
         public Signal Signal { get; set; }
 
         [JsonProperty(PropertyName = "actions", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, ActionDbType> Actions { get; set; }
+        public Dictionary<string, ActionType> Actions { get; set; }
 
         [JsonProperty(PropertyName = "_trace", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Trace { get; set; }
@@ -55,36 +55,26 @@ namespace Syntinel.Core
         }
     }
 
-    public class ActionDbType
+    public class ActionType
     {
-        [JsonProperty(PropertyName = "_isValid")]
-        public bool IsValid { get; set; }
-
-        [JsonProperty(PropertyName = "_status")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public StatusType Status { get; set; }
-
-        [JsonProperty(PropertyName = "_statusMessage", NullValueHandling = NullValueHandling.Ignore)]
-        public string StatusMessage { get; set; }
-
-        [JsonProperty(PropertyName = "_time")]
-        public DateTime Time { get; set; }
-
         [JsonProperty(PropertyName = "cueId")]
         public string CueId { get; set; }
 
         [JsonProperty(PropertyName = "variables")]
-        public List<VariableDbType> Variables { get; set; } = new List<VariableDbType>();
+        public List<MultiValueVariable> Variables { get; set; } = new List<MultiValueVariable>();
 
-    }
+        [JsonProperty(PropertyName = "isValid")]
+        public bool IsValid { get; set; }
 
-    public class VariableDbType
-    {
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
+        [JsonProperty(PropertyName = "status")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public StatusType Status { get; set; }
 
-        [JsonProperty(PropertyName = "values")]
-        public List<string> Values { get; set; }
+        [JsonProperty(PropertyName = "statusMessage", NullValueHandling = NullValueHandling.Ignore)]
+        public string StatusMessage { get; set; }
+
+        [JsonProperty(PropertyName = "time")]
+        public DateTime Time { get; set; }
     }
 
 }

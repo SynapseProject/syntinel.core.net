@@ -11,7 +11,9 @@ public class Echo : IResolver
         Status status = new Status();
         Dictionary<object, object> data = new Dictionary<object, object>();
         StringBuilder sb = new StringBuilder();
-        foreach (CueVariable variable in request.Variables)
+
+        ActionType action = request.Actions[request.ActionId];
+        foreach (MultiValueVariable variable in action.Variables)
         {
             data[variable.Name] = variable.Values;
             if (sb.Length > 0)

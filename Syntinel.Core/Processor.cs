@@ -211,9 +211,9 @@ namespace Syntinel.Core
 
         public void ProcessCue(CueRequest req)
         {
-            SignalDbRecord signal = req.Signal;
+            SignalDbRecord signalDbRecord = req.Signal;
             Cue cue = req.Cue;
-            ActionDbType action = new ActionDbType
+            ActionType action = new ActionType
             {
                 CueId = cue.CueId,
                 Status = StatusType.New,
@@ -221,46 +221,39 @@ namespace Syntinel.Core
                 Time = DateTime.UtcNow
             };
 
-            foreach (CueVariable var in cue.Variables)
-            {
-                VariableDbType varDb = new VariableDbType
-                {
-                    Name = var.Name,
-                    Values = var.Values
-                };
-                action.Variables.Add(varDb);
-            }
+            action.Variables = cue.Variables;
 
-            if (signal.Actions == null)
-                signal.Actions = new System.Collections.Generic.Dictionary<string, ActionDbType>();
+            if (signalDbRecord.Actions == null)
+                signalDbRecord.Actions = new System.Collections.Generic.Dictionary<string, ActionType>();
 
-            Resolver resolver = signal.Signal.Cues[cue.CueId].Resolver;
+            Resolver resolver = signalDbRecord.Signal.Cues[cue.CueId].Resolver;
             ResolverRequest request = new ResolverRequest();
 
             try
             {
-                ValidateCue(signal, cue);
+                ValidateCue(signalDbRecord, cue);
 
                 request.Id = cue.Id;
                 request.ActionId = req.ActionId;
                 request.CueId = cue.CueId;
-                request.Variables = cue.Variables;
                 request.Config = resolver.Config;
 
-                signal.Status = StatusType.Received;
+                signalDbRecord.Status = StatusType.Received;
             }
             catch (Exception e)
             {
                 // TODO : Check for "Terminal" Status As Well.
-                if (signal.Status != StatusType.Received)
-                    signal.Status = StatusType.Invalid;
+                if (signalDbRecord.Status != StatusType.Received)
+                    signalDbRecord.Status = StatusType.Invalid;
                 action.Status = StatusType.Error;
                 action.StatusMessage = e.Message;
             }
 
-            signal.Actions.Add(req.ActionId, action);
-            signal = DbEngine.Update<SignalDbRecord>(signal, true);
-            request.Signal = signal;
+            signalDbRecord.Actions.Add(req.ActionId, action);
+            signalDbRecord = DbEngine.Update<SignalDbRecord>(signalDbRecord, true);
+            request.Signal = signalDbRecord.Signal;
+            request.Actions = signalDbRecord.Actions;
+            request.Trace = signalDbRecord.Trace;
             Logger.Info($"Sending To Resolver [{resolver.Name}].  {JsonTools.Serialize(request)}");
             SendToResolver(resolver, request);
         }
@@ -299,7 +292,7 @@ namespace Syntinel.Core
 
             if (!String.IsNullOrWhiteSpace(status.ActionId))
             {
-                ActionDbType action = signal.Actions[status.ActionId];
+                ActionType action = signal.Actions[status.ActionId];
                 action.Status = status.NewStatus;
                 action.IsValid = status.IsValidReply;
             }

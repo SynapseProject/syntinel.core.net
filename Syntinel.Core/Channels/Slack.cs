@@ -64,7 +64,7 @@ namespace Syntinel.Core
                 CueId = cueId
             };
 
-            CueVariable actionVariable = new CueVariable
+            MultiValueVariable actionVariable = new MultiValueVariable
             {
                 Name = "action"
             };

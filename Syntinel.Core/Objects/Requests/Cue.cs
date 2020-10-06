@@ -15,10 +15,10 @@ namespace Syntinel.Core
         public string CueId { get; set; }
 
         [JsonProperty(PropertyName = "variables")]
-        public List<CueVariable> Variables { get; set; } = new List<CueVariable>();
+        public List<MultiValueVariable> Variables { get; set; } = new List<MultiValueVariable>();
     }
 
-    public class CueVariable
+    public class MultiValueVariable
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
