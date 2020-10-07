@@ -34,7 +34,7 @@ public class AWSLambdaResolver : IResolver
         Status status = new Status();
         status.Id = request.Id;
         status.ActionId = request.ActionId;
-        status.NewStatus = StatusType.InProgress;
+        status.NewStatus = StatusType.SentToResolver;
         status.Message = $"Request Sent To Lambda Function [{config.Name}].";
 
         return status;

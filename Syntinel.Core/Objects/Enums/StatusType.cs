@@ -7,7 +7,7 @@ namespace Syntinel.Core
         New,
         Sent,
         Received,
-        InProgress,
+        SentToResolver,
         Completed,
         Error,
         Invalid
