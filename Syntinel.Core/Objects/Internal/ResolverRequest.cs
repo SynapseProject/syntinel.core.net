@@ -17,9 +17,6 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "cueId")]
         public string CueId { get; set; }
 
-        [JsonProperty(PropertyName = "config")]
-        public Dictionary<string, object> Config { get; set; }
-
         [JsonProperty(PropertyName = "signal")]
         public Signal Signal { get; set; }
 

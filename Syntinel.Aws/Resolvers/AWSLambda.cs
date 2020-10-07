@@ -21,7 +21,8 @@ public class AWSLambdaResolver : IResolver
 
     public Status ProcessRequest(ResolverRequest request)
     {
-        Config config = JsonTools.Convert<Config>(request.Config);
+        String cueId = request.CueId;
+        Config config = JsonTools.Convert<Config>(request.Signal.Cues[cueId].Resolver.Config);
         RegionEndpoint region = RegionEndpoint.GetBySystemName(System.Environment.GetEnvironmentVariable("AWS_REGION"));
         if (!String.IsNullOrEmpty(config.Region))
             region = RegionEndpoint.GetBySystemName(config.Region);

@@ -236,7 +236,6 @@ namespace Syntinel.Core
                 request.Id = cue.Id;
                 request.ActionId = req.ActionId;
                 request.CueId = cue.CueId;
-                request.Config = resolver.Config;
 
                 signalDbRecord.Status = StatusType.Received;
             }
