@@ -21,6 +21,7 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "defaultChannels")]
         public string[] DefaultChannels { get; set; } = { "_default" };
 
+        [JsonIgnore]
         public Dictionary<string, ChannelDbRecord> Channels { get; set; } = new Dictionary<string, ChannelDbRecord>();
 
         [JsonProperty(PropertyName = "isActive")]

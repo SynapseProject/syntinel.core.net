@@ -18,9 +18,6 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "channels")]
         public string[] Channels { get; set; }
 
-        [JsonProperty(PropertyName = "reporterId")]
-        public string ReporterId { get; set; }
-
         public static RouterDbRecord Get(IDatabaseEngine db, string routerId, string routerType)
         {
             RouterDbRecord rec = null;
