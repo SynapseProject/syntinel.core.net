@@ -27,7 +27,7 @@ namespace Syntinel.Core
 
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
-            RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType);
+            RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType, reporterId);
             if (reporter == null)
                 throw new Exception($"Reporter [{reporterId}] Does Not Exist.");
             reporter.LoadChannels(DbEngine, router);

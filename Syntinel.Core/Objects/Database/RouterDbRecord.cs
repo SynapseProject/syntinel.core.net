@@ -18,16 +18,27 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "channels")]
         public string[] Channels { get; set; }
 
-        public static RouterDbRecord Get(IDatabaseEngine db, string routerId, string routerType)
+        public static RouterDbRecord Get(IDatabaseEngine db, string routerId, string routerType, string reporterId)
         {
             RouterDbRecord rec = null;
 
             if (!String.IsNullOrWhiteSpace(routerId))
             {
                 string[] ids = new string[2];
-                ids[0] = routerId;
-                ids[1] = String.IsNullOrWhiteSpace(routerType) ? " " : routerType;
-                rec = db.Get<RouterDbRecord>(ids);
+                if (!String.IsNullOrWhiteSpace(routerType))
+                {
+                    ids[0] = routerId;
+                    ids[1] = routerType;
+                    rec = db.Get<RouterDbRecord>(ids);
+                }
+
+                // If Not Found By RouterType, Try ReporterId Instead
+                if (rec == null)
+                {
+                    ids[0] = routerId;
+                    ids[1] = reporterId;
+                    rec = db.Get<RouterDbRecord>(ids);
+                }
             }
 
             return rec;

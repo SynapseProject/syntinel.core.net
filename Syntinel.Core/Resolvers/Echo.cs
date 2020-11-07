@@ -12,13 +12,16 @@ public class Echo : IResolver
         Dictionary<object, object> data = new Dictionary<object, object>();
         StringBuilder sb = new StringBuilder();
 
+        //Dictionary<string, object> config = request.Signal.Cues[request.CueId].Resolver.Config;
+        //List<MultiValueVariable> variables = request.Actions[request.ActionId].Variables;
+
         ActionType action = request.Actions[request.ActionId];
         foreach (MultiValueVariable variable in action.Variables)
         {
             data[variable.Name] = variable.Values;
             if (sb.Length > 0)
                 sb.AppendLine();
-            sb.Append($"{variable.Name} : {String.Join(',', variable.Values)}");
+            sb.Append($"{variable.Name} = {String.Join(',', variable.Values)}");
         }
 
         status.Id = request.Id;
