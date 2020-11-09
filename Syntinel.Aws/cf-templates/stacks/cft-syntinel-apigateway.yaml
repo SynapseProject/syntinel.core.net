@@ -630,25 +630,25 @@ Outputs:
       Name: !Sub "${AWS::StackName}-SyntinelBaseUrl"
 
   SignalUrl:
-    Description: The base URL for Syntinel deployed by this template.
+    Description: The URL for sending Syntinel Signals from a reporter.
     Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/signal" ] ] }
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelSignalUrl"
 
   StatusUrl:
-    Description: The base URL for Syntinel deployed by this template.
+    Description: The URL for sending Syntinel Status messages from a resolver.
     Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/status" ] ] }
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelStatusUrl"
 
   SlackCueUrl:
-    Description: The base URL for Syntinel deployed by this template.
+    Description: The URL for receiving Syntinel Cue Messages from Slack.
     Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/cue/slack" ] ] }
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelSlackCueUrl"
 
   TeamsCueUrl:
-    Description: The base URL for Syntinel deployed by this template.
+    Description: The URL for receiving Syntinel Cue Messages from Microsoft Teams.
     Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/cue/teams" ] ] }
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelTeamsCueUrl"
