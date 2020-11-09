@@ -148,7 +148,7 @@ Resources:
                               "type": "array",
                               "items": {
                                   "type": "object",
-                                  "required": ["id", "type"],
+                                  "required": ["type"],
                                   "properties": {
                                       "name": { "type": "string" },
                                       "id": { "type": "string" },
