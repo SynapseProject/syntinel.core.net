@@ -622,3 +622,34 @@ Outputs:
     Value: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelApiGateway"
+
+  BaseUrl:
+    Description: The base URL for Syntinel deployed by this template.
+    Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/" ] ] }
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelBaseUrl"
+
+  SignalUrl:
+    Description: The base URL for Syntinel deployed by this template.
+    Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/signal" ] ] }
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelSignalUrl"
+
+  StatusUrl:
+    Description: The base URL for Syntinel deployed by this template.
+    Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/status" ] ] }
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelStatusUrl"
+
+  SlackCueUrl:
+    Description: The base URL for Syntinel deployed by this template.
+    Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/cue/slack" ] ] }
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelSlackCueUrl"
+
+  TeamsCueUrl:
+    Description: The base URL for Syntinel deployed by this template.
+    Value: { "Fn::Join": [ "", [ "https://", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, ".execute-api.", { "Ref": "AWS::Region" }, ".amazonaws.com/syntinel/cue/teams" ] ] }
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelTeamsCueUrl"
+
