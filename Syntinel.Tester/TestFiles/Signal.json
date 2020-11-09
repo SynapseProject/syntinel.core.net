@@ -10,10 +10,10 @@
       "name": "EC2 Usage",
       "description": "Server [i-888888888888] has been running for 7 days.  Would you like to take action against it?",
       "resolver": {
-        "name": "ec2utils",
+        "name": "Echo",
+        "notify": true,
         "config": {
-          "instances": [ "i-888888888888" ],
-          "notify": false
+          "instances": [ "i-888888888888" ]
         }
       },
       "inputs": [
