@@ -30,6 +30,8 @@ namespace Syntinel.Core
             RouterDbRecord router = RouterDbRecord.Get(DbEngine, signal.RouterId, signal.RouterType, reporterId);
             if (reporter == null)
                 throw new Exception($"Reporter [{reporterId}] Does Not Exist.");
+            if (reporter.IsActive == false)
+                throw new Exception($"Reporter [{reporterId}] Is Not Active.");
             reporter.LoadChannels(DbEngine, router);
 
             // Retrieve Any CueOption Templates Specified
