@@ -29,33 +29,18 @@ namespace Syntinel.Core
         public Dictionary<string, ActionType> Actions { get; set; }
 
         [JsonProperty(PropertyName = "_trace", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, TraceType> Trace { get; set; }
+        public List<TraceType> Trace { get; set; }
 
         public void AddTrace(object value)
         {
-            int maxRetries = 5;
             if (Trace == null)
-                Trace = new Dictionary<string, TraceType>();
-            string key = Utils.GenerateId();
-            int i = 0;
-            while (Trace.ContainsKey(key) && (i++ < maxRetries))
-                key = Utils.GenerateId();
-
-            if (i >= maxRetries)
-                key = new Guid().ToString();
+                Trace = new List<TraceType>();
 
             TraceType obj = new TraceType();
             obj.Type = value.GetType().Name;
             obj.Object = value;
 
-            AddTrace(key, obj);
-        }
-
-        public void AddTrace(string key, TraceType trace)
-        {
-            if (Trace == null)
-                Trace = new Dictionary<string, TraceType>();
-            Trace.Add(key, trace);
+            Trace.Add(obj);
         }
     }
 
