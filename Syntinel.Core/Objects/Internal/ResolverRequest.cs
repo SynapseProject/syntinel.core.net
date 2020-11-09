@@ -24,7 +24,7 @@ namespace Syntinel.Core
         public Dictionary<string, ActionType> Actions { get; set; }
 
         [JsonProperty(PropertyName = "trace", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, object> Trace { get; set; }
+        public Dictionary<string, TraceType> Trace { get; set; }
 
     }
 }

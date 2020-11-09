@@ -29,29 +29,33 @@ namespace Syntinel.Core
         public Dictionary<string, ActionType> Actions { get; set; }
 
         [JsonProperty(PropertyName = "_trace", NullValueHandling = NullValueHandling.Ignore)]
-        public Dictionary<string, object> Trace { get; set; }
+        public Dictionary<string, TraceType> Trace { get; set; }
 
         public void AddTrace(object value)
         {
             int maxRetries = 5;
             if (Trace == null)
-                Trace = new Dictionary<string, object>();
-            string key = $"{Utils.GenerateId()}_{value.GetType().Name}";
+                Trace = new Dictionary<string, TraceType>();
+            string key = Utils.GenerateId();
             int i = 0;
             while (Trace.ContainsKey(key) && (i++ < maxRetries))
-                key = $"{Utils.GenerateId()}_{value.GetType().Name}";
+                key = Utils.GenerateId();
 
             if (i >= maxRetries)
                 key = new Guid().ToString();
 
-            AddTrace(key, value);
+            TraceType obj = new TraceType();
+            obj.Type = value.GetType().Name;
+            obj.Object = value;
+
+            AddTrace(key, obj);
         }
 
-        public void AddTrace(string key, object value)
+        public void AddTrace(string key, TraceType trace)
         {
             if (Trace == null)
-                Trace = new Dictionary<string, object>();
-            Trace.Add(key, value);
+                Trace = new Dictionary<string, TraceType>();
+            Trace.Add(key, trace);
         }
     }
 
@@ -75,6 +79,15 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "time")]
         public DateTime Time { get; set; }
+    }
+
+    public class TraceType
+    {
+        [JsonProperty(PropertyName = "type")]
+        public string Type { get; set; }
+
+        [JsonProperty(PropertyName = "object")]
+        public object Object { get; set; }
     }
 
 }
