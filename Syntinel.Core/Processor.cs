@@ -17,13 +17,26 @@ namespace Syntinel.Core
                 Logger = logger;
         }
 
-        public SignalReply ProcessSignal(Signal signal)
+        public SignalReply ProcessSignal(Signal request)
         {
             bool isActionable = false;
             SignalReply reply = new SignalReply();
             reply.StatusCode = StatusCode.Success;
             reply.Time = DateTime.UtcNow;
             reply.StatusCode = StatusCode.Success;
+
+            Signal signal = request;
+
+            if (signal.HasTemplate)
+            {
+                signal = signal.GetTemplate<Signal>(DbEngine);
+                if (!String.IsNullOrWhiteSpace(request.ReporterId))
+                    signal.ReporterId = request.ReporterId;
+                if (!String.IsNullOrWhiteSpace(request.RouterId))
+                    signal.RouterId = request.RouterId;
+                if (!String.IsNullOrWhiteSpace(request.RouterType))
+                    signal.RouterType = request.RouterType;
+            }
 
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);

@@ -1,0 +1,10 @@
+﻿{
+  "reporterId": "_default",
+  "routerId": "public",
+  "routerType":  "access-level",
+  "template": "simple-alert",
+  "arguments": {
+    "title": "Hello Darkness My Old Friend",
+    "description": "I've come to talk with you again."
+  }
+}

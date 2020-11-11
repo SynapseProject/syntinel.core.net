@@ -9,10 +9,10 @@ namespace Syntinel.Core
 {
     public class Templatable
     {
-        [JsonProperty(PropertyName = "template")]
+        [JsonProperty(PropertyName = "template", NullValueHandling = NullValueHandling.Ignore)]
         public string TemplateId { get; set; }      // If Present, Retrieve Object From Syntinel Templates Table.
 
-        [JsonProperty(PropertyName = "arguments")]
+        [JsonProperty(PropertyName = "arguments", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Arguments { get; set; }
 
         public bool HasTemplate {

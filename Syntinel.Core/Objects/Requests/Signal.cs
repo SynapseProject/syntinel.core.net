@@ -11,10 +11,10 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "reporterId")]
         public string ReporterId { get; set; }
 
-        [JsonProperty(PropertyName = "routerId")]
+        [JsonProperty(PropertyName = "routerId", NullValueHandling = NullValueHandling.Ignore)]
         public string RouterId { get; set; }
 
-        [JsonProperty(PropertyName = "routerType")]
+        [JsonProperty(PropertyName = "routerType", NullValueHandling = NullValueHandling.Ignore)]
         public string RouterType { get; set; }
 
         [JsonProperty(PropertyName = "name")]
@@ -77,7 +77,7 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "id")]
+        [JsonProperty(PropertyName = "id", NullValueHandling = NullValueHandling.Ignore)]
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "description")]
@@ -87,7 +87,7 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public VariableType Type { get; set; }
 
-        [JsonProperty(PropertyName = "values")]
+        [JsonProperty(PropertyName = "values", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, string> Values { get; set; }
 
         [JsonProperty(PropertyName = "defaultValue")]
