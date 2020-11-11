@@ -7,7 +7,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public class ChannelDbRecord
+    public class ChannelDbRecord : Templatable<ChannelDbRecord>
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
@@ -26,11 +26,5 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "isActive")]
         public bool IsActive { get; set; } = true;
-
-        [JsonProperty(PropertyName = "template")]
-        public string TemplateId { get; set; }
-
-        [JsonProperty(PropertyName = "arguments")]
-        public Dictionary<string, object> Arguments { get; set; }
     }
 }

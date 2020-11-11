@@ -1,18 +1,8 @@
 ﻿{
-  "name": "Utilization",
-  "description": "EC2 Utilization Montior",
-  "maxReplies": 1,
   "reporterId": "_default",
-  "includeId": true,
-  "cues": {
-    "ec2": {
-      "template": "ec2",
-      "arguments": {
-        "instance": "i-8675309JENNY",
-        "notify":  true
-      }
-    }
-  },
-  "defaultCue": "ec2",
-  "defaultCueTimeout": 4320
+  "template": "ec2-utilization",
+  "arguments": {
+    "instance": "i-8675309JENNY",
+    "notify": false
+  }
 }

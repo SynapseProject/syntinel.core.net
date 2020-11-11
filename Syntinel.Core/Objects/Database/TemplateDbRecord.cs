@@ -10,20 +10,13 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public enum TemplateType
-    {
-        CueOption,
-        Channel
-    }
-
     public class TemplateDbRecord
     {
         [JsonProperty(PropertyName = "_id")]
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "_type")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public TemplateType Type { get; set; }
+        public string Type { get; set; }
 
         [JsonProperty(PropertyName = "template", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string,object> Template { get; set; }

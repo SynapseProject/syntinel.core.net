@@ -6,15 +6,15 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public class Signal
+    public class Signal : Templatable<Signal>
     {
         [JsonProperty(PropertyName = "reporterId")]
         public string ReporterId { get; set; }
 
-        [JsonProperty(PropertyName = "routerId")]
+        [JsonProperty(PropertyName = "routerId", NullValueHandling = NullValueHandling.Ignore)]
         public string RouterId { get; set; }
 
-        [JsonProperty(PropertyName = "routerType")]
+        [JsonProperty(PropertyName = "routerType", NullValueHandling = NullValueHandling.Ignore)]
         public string RouterType { get; set; }
 
         [JsonProperty(PropertyName = "name")]
@@ -39,7 +39,7 @@ namespace Syntinel.Core
         public bool IncludeId { get; set; } = true;
     }
 
-    public class CueOption
+    public class CueOption : Templatable<CueOption>
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
@@ -58,12 +58,6 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "defaultAction")]
         public string DefaultAction { get; set; }
-
-        [JsonProperty(PropertyName = "template")]
-        public string TemplateId { get; set; }      // If Present, CueOption Retrieved From Syntinel Templates Table.
-
-        [JsonProperty(PropertyName = "arguments")]
-        public Dictionary<string,object> Arguments { get; set; }
     }
 
     public class Resolver
@@ -83,7 +77,7 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "id")]
+        [JsonProperty(PropertyName = "id", NullValueHandling = NullValueHandling.Ignore)]
         public string Id { get; set; }
 
         [JsonProperty(PropertyName = "description")]
@@ -93,7 +87,7 @@ namespace Syntinel.Core
         [JsonConverter(typeof(StringEnumConverter))]
         public VariableType Type { get; set; }
 
-        [JsonProperty(PropertyName = "values")]
+        [JsonProperty(PropertyName = "values", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, string> Values { get; set; }
 
         [JsonProperty(PropertyName = "defaultValue")]

@@ -17,13 +17,26 @@ namespace Syntinel.Core
                 Logger = logger;
         }
 
-        public SignalReply ProcessSignal(Signal signal)
+        public SignalReply ProcessSignal(Signal request)
         {
             bool isActionable = false;
             SignalReply reply = new SignalReply();
             reply.StatusCode = StatusCode.Success;
             reply.Time = DateTime.UtcNow;
             reply.StatusCode = StatusCode.Success;
+
+            Signal signal = request;
+
+            if (signal.HasTemplate)
+            {
+                signal = signal.GetTemplate(DbEngine);
+                if (!String.IsNullOrWhiteSpace(request.ReporterId))
+                    signal.ReporterId = request.ReporterId;
+                if (!String.IsNullOrWhiteSpace(request.RouterId))
+                    signal.RouterId = request.RouterId;
+                if (!String.IsNullOrWhiteSpace(request.RouterType))
+                    signal.RouterType = request.RouterType;
+            }
 
             string reporterId = Utils.GetValue(signal.ReporterId, "DefaultReporterId", "_default");
             ReporterDbRecord reporter = DbEngine.Get<ReporterDbRecord>(reporterId);
@@ -40,16 +53,10 @@ namespace Syntinel.Core
                 List<string> keys = new List<string>(signal.Cues.Keys);
                 foreach (string key in keys)
                 {
-                    CueOption option = signal.Cues[key];
-                    if (!String.IsNullOrWhiteSpace(option.TemplateId))
-                    {
-                        string[] ids = { option.TemplateId, typeof(CueOption).Name };
-                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                        template.SetParameters(option.Arguments);
-                        option = JsonTools.Convert<CueOption>(template.Template);
-                        signal.Cues[key] = option;
-                    }
-                    if (option.Actions.Count > 0)
+                    if (signal.Cues[key].HasTemplate)
+                        signal.Cues[key] = signal.Cues[key].GetTemplate(DbEngine);
+
+                    if (signal.Cues[key].Actions.Count > 0)
                         isActionable = true;
                 }
             }
@@ -70,15 +77,10 @@ namespace Syntinel.Core
                 SignalStatus status;
                 if (channel != null)
                 {
-                    ChannelDbRecord target = channel;
-                    if (!String.IsNullOrEmpty(channel.TemplateId))
-                    {
-                        string[] ids = { channel.TemplateId, "Channel" };
-                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                        template.SetParameters(channel.Arguments);
-                        target = JsonTools.Convert<ChannelDbRecord>(template.Template);
-                    }
-                    status = SendToChannel(target, signalDb);
+                    if (channel.HasTemplate)
+                        channel = channel.GetTemplate(DbEngine);
+
+                    status = SendToChannel(channel, signalDb);
                     status.ChannelId = key;
                 }
                 else
