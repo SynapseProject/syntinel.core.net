@@ -29,7 +29,7 @@ namespace Syntinel.Core
 
             if (signal.HasTemplate)
             {
-                signal = signal.GetTemplate<Signal>(DbEngine);
+                signal = signal.GetTemplate(DbEngine);
                 if (!String.IsNullOrWhiteSpace(request.ReporterId))
                     signal.ReporterId = request.ReporterId;
                 if (!String.IsNullOrWhiteSpace(request.RouterId))
@@ -54,7 +54,7 @@ namespace Syntinel.Core
                 foreach (string key in keys)
                 {
                     if (signal.Cues[key].HasTemplate)
-                        signal.Cues[key] = signal.Cues[key].GetTemplate<CueOption>(DbEngine);
+                        signal.Cues[key] = signal.Cues[key].GetTemplate(DbEngine);
 
                     if (signal.Cues[key].Actions.Count > 0)
                         isActionable = true;
@@ -78,7 +78,7 @@ namespace Syntinel.Core
                 if (channel != null)
                 {
                     if (channel.HasTemplate)
-                        channel = channel.GetTemplate<ChannelDbRecord>(DbEngine);
+                        channel = channel.GetTemplate(DbEngine);
 
                     status = SendToChannel(channel, signalDb);
                     status.ChannelId = key;

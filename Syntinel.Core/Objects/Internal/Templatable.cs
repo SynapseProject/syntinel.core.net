@@ -7,7 +7,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public class Templatable
+    public class Templatable<T>
     {
         [JsonProperty(PropertyName = "template", NullValueHandling = NullValueHandling.Ignore)]
         public string TemplateId { get; set; }      // If Present, Retrieve Object From Syntinel Templates Table.
@@ -21,7 +21,7 @@ namespace Syntinel.Core
             }
         }
 
-        public T GetTemplate<T>(IDatabaseEngine db) {
+        public T GetTemplate(IDatabaseEngine db) {
             Type t = this.GetType();
             string[] ids = { TemplateId, t.Name };
             TemplateDbRecord template = db.Get<TemplateDbRecord>(ids);

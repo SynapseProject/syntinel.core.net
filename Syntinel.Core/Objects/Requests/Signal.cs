@@ -6,7 +6,7 @@ using Newtonsoft.Json.Converters;
 
 namespace Syntinel.Core
 {
-    public class Signal : Templatable
+    public class Signal : Templatable<Signal>
     {
         [JsonProperty(PropertyName = "reporterId")]
         public string ReporterId { get; set; }
@@ -39,7 +39,7 @@ namespace Syntinel.Core
         public bool IncludeId { get; set; } = true;
     }
 
-    public class CueOption : Templatable
+    public class CueOption : Templatable<CueOption>
     {
         [JsonProperty(PropertyName = "name")]
         public string Name { get; set; }
