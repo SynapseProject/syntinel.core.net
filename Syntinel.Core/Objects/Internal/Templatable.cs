@@ -22,8 +22,7 @@ namespace Syntinel.Core
         }
 
         public T GetTemplate(IDatabaseEngine db) {
-            Type t = this.GetType();
-            string[] ids = { TemplateId, t.Name };
+            string[] ids = { TemplateId, this.GetType().Name };
             TemplateDbRecord template = db.Get<TemplateDbRecord>(ids);
             template.SetParameters(Arguments);
             return JsonTools.Convert<T>(template.Template);
