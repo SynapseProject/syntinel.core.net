@@ -40,16 +40,10 @@ namespace Syntinel.Core
                 List<string> keys = new List<string>(signal.Cues.Keys);
                 foreach (string key in keys)
                 {
-                    CueOption option = signal.Cues[key];
-                    if (!String.IsNullOrWhiteSpace(option.TemplateId))
-                    {
-                        string[] ids = { option.TemplateId, typeof(CueOption).Name };
-                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                        template.SetParameters(option.Arguments);
-                        option = JsonTools.Convert<CueOption>(template.Template);
-                        signal.Cues[key] = option;
-                    }
-                    if (option.Actions.Count > 0)
+                    if (signal.Cues[key].HasTemplate)
+                        signal.Cues[key] = signal.Cues[key].GetTemplate<CueOption>(DbEngine);
+
+                    if (signal.Cues[key].Actions.Count > 0)
                         isActionable = true;
                 }
             }
@@ -70,15 +64,10 @@ namespace Syntinel.Core
                 SignalStatus status;
                 if (channel != null)
                 {
-                    ChannelDbRecord target = channel;
-                    if (!String.IsNullOrEmpty(channel.TemplateId))
-                    {
-                        string[] ids = { channel.TemplateId, "Channel" };
-                        TemplateDbRecord template = DbEngine.Get<TemplateDbRecord>(ids);
-                        template.SetParameters(channel.Arguments);
-                        target = JsonTools.Convert<ChannelDbRecord>(template.Template);
-                    }
-                    status = SendToChannel(target, signalDb);
+                    if (channel.HasTemplate)
+                        channel = channel.GetTemplate<ChannelDbRecord>(DbEngine);
+
+                    status = SendToChannel(channel, signalDb);
                     status.ChannelId = key;
                 }
                 else
