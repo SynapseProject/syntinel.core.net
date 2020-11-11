@@ -64,21 +64,20 @@ namespace Syntinel.Core
                 CueId = cueId
             };
 
-            MultiValueVariable actionVariable = new MultiValueVariable
-            {
-                Name = "action"
-            };
-
             foreach (SlackReplyAction actionReply in payload.Actions)
             {
+                MultiValueVariable actionVariable = new MultiValueVariable();
+                actionVariable.Name = actionReply.Name;
+
                 if (actionReply.Type == "select")
                     foreach (Dictionary<string, string> option in actionReply.SelectedOptions)
                         actionVariable.Values.Add(option["value"]);
                 else if (actionReply.Type == "button")
                     actionVariable.Values.Add(actionReply.Value);
+
+                cue.Variables.Add(actionVariable);
             }
 
-            cue.Variables.Add(actionVariable);
 
             return cue;
         }
@@ -154,7 +153,7 @@ namespace Syntinel.Core
         {
             SlackAction slackAction = new SlackAction();
 
-            slackAction.Name = action.Name;
+            slackAction.Name = action.Text;
             slackAction.Value = action.DefaultValue;
 
             switch (action.Type)
@@ -173,7 +172,7 @@ namespace Syntinel.Core
 
                 case VariableType.button:
                     slackAction.Type = SlackActionType.button;
-                    slackAction.Text = action.Description;
+                    slackAction.Text = action.Text;
                     break;
             }
 

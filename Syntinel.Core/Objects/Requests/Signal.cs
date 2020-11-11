@@ -74,18 +74,15 @@ namespace Syntinel.Core
 
     public class SignalVariable
     {
-        [JsonProperty(PropertyName = "name")]
-        public string Name { get; set; }
-
         [JsonProperty(PropertyName = "id", NullValueHandling = NullValueHandling.Ignore)]
-        public string Id { get; set; }
-
-        [JsonProperty(PropertyName = "description")]
-        public string Description { get; set; }
+        public string Id { get; set; } = "action";
 
         [JsonProperty(PropertyName = "type")]
         [JsonConverter(typeof(StringEnumConverter))]
         public VariableType Type { get; set; }
+
+        [JsonProperty(PropertyName = "text")]
+        public string Text { get; set; }
 
         [JsonProperty(PropertyName = "values", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, string> Values { get; set; }
