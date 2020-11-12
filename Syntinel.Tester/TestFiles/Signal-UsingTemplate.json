@@ -3,6 +3,6 @@
   "template": "ec2-utilization",
   "arguments": {
     "instance": "i-8675309JENNY",
-    "notify": false
+    "notify": true
   }
 }

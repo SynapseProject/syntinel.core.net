@@ -153,7 +153,7 @@ namespace Syntinel.Core
         {
             SlackAction slackAction = new SlackAction();
 
-            slackAction.Name = action.Text;
+            slackAction.Name = action.Id;
             slackAction.Value = action.DefaultValue;
 
             switch (action.Type)

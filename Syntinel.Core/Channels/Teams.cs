@@ -177,7 +177,7 @@ namespace Syntinel.Core
 
                 potnetialAction.Inputs.Add(input);
 
-                actionBody.Add(action.Id, "{{action.value}}");
+                actionBody.Add(action.Id, "{{" + action.Id + ".value}}");
                 MessageCardAction submit = new MessageCardAction()
                 {
                     Type = MessageCardActionType.HttpPOST,
