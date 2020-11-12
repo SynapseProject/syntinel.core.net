@@ -145,7 +145,7 @@ namespace Syntinel.Core
             string actionUrl = request.Channel?.Config?["actionUrl"]?.ToString();
 
             MessageCardAction potnetialAction = new MessageCardAction();
-            potnetialAction.Name = action.Name;
+            potnetialAction.Name = action.Text;
 
             Dictionary<string, object> actionBody = new Dictionary<string, object>();
             actionBody.Add("signalId", request.Id);
@@ -159,8 +159,8 @@ namespace Syntinel.Core
 
                 MessageCardInput input = new MessageCardInput();
                 input.Type = MessageCardInputType.MultichoiceInput;
-                input.Id = "action";        // TODO: Get This From Signal Message Directly
-                input.Title = action.Description;
+                input.Id = action.Id;
+                input.Title = action.Text;
                 input.Value = action.DefaultValue;
                 input.Style = MessageCardInputStyle.expanded;       // Expanded = Radio Buttons.  Remove for Drop Down"
                 input.IsMultiSelect = false;
@@ -177,7 +177,7 @@ namespace Syntinel.Core
 
                 potnetialAction.Inputs.Add(input);
 
-                actionBody.Add("action", "{{action.value}}");
+                actionBody.Add(action.Id, "{{" + action.Id + ".value}}");
                 MessageCardAction submit = new MessageCardAction()
                 {
                     Type = MessageCardActionType.HttpPOST,
@@ -189,7 +189,7 @@ namespace Syntinel.Core
             }
             else if (action.Type == VariableType.button)
             {
-                actionBody.Add("action", action.DefaultValue);
+                actionBody.Add(action.Id, action.DefaultValue);
 
                 potnetialAction.Type = MessageCardActionType.HttpPOST;
                 potnetialAction.Target = actionUrl;
@@ -288,8 +288,8 @@ namespace Syntinel.Core
                 if (action.Type == VariableType.button)
                 {
                     myAction.Type = "Action.Submit";
-                    myAction.Id = "action";
-                    myAction.Title = action.Name;
+                    myAction.Id = action.Id;
+                    myAction.Title = action.Text;
                     myAction.Data = new AdaptiveCardActionData();
                     myAction.Data.CallbackId = $"{signalId}|{cueId}";
                     myAction.Data.Action = action.DefaultValue;
@@ -299,7 +299,7 @@ namespace Syntinel.Core
                 else if (action.Type == VariableType.choice)
                 {
                     myAction.Type = "Action.ShowCard";
-                    myAction.Title = action.Name;
+                    myAction.Title = action.Text;
 
                     myAction.Card = new AdaptiveCard();
                     myAction.Card.Type = "AdaptiveCard";
@@ -318,7 +318,7 @@ namespace Syntinel.Core
 
                     AdaptiveCardBodyItems choiceItems = new AdaptiveCardBodyItems();
                     choiceItems.Type = "Input.ChoiceSet";
-                    choiceItems.Id = "action";
+                    choiceItems.Id = action.Id;
 
                     foreach (string key in action.Values.Keys)
                     {
