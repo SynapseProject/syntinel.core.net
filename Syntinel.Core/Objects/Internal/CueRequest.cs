@@ -14,9 +14,6 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "actionId")]
         public string ActionId { get; set; }
 
-        [JsonProperty(PropertyName = "signal")]
-        public SignalDbRecord Signal { get; set; }
-
         [JsonProperty(PropertyName = "cue")]
         public Cue Cue { get; set; }
     }
