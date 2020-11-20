@@ -82,6 +82,31 @@ namespace Syntinel.Core
             return cue;
         }
 
+        public static string FormatResponse(Cue cue, CueReply reply)
+        {
+            SignalDbRecord signal = reply.SignalDbRecord;
+            StringBuilder sb = new StringBuilder();
+
+            string signalTitle = $"{signal?.Signal?.Name} - {signal?.Signal?.Description}";
+            if (String.IsNullOrEmpty(signal?.Signal?.Name))
+                signalTitle = signal?.Signal?.Description;
+            else if (String.IsNullOrEmpty(signal?.Signal?.Description))
+                signalTitle = signal?.Signal?.Name;
+            else if (String.IsNullOrEmpty(signal?.Signal?.Name) && String.IsNullOrEmpty(signal?.Signal?.Description))
+                signalTitle = null;
+
+            if (!String.IsNullOrWhiteSpace(signalTitle))
+                sb.AppendLine($"Action Received From [{cue.Payload?.User?.Name}] To Signal [{signalTitle}]");
+            else
+                sb.AppendLine($"Action Received From [{cue.Payload?.User?.Name}]");
+            sb.AppendLine($"Signal Id : {reply.Id}");
+            sb.AppendLine($"Action Id : {reply.ActionId}");
+            foreach (MultiValueVariable variable in cue.Variables)
+                sb.AppendLine($"{variable.Name} = {String.Join(',', variable.Values)}");
+
+            return sb.ToString();
+        }
+
         public static void SendResponse(string responseUrl, string message)
         {
             string body = "{ 'text': '" + message + "' }";
@@ -107,7 +132,7 @@ namespace Syntinel.Core
             else if (String.IsNullOrEmpty(signal.Description))
                 mainTitle = signal.Name;
 
-            if (!String.IsNullOrEmpty(mainTitle))
+            if (!String.IsNullOrWhiteSpace(mainTitle))
                 message.Text = mainTitle;
             else if (signal.Cues == null)
                 message.Text = " ";

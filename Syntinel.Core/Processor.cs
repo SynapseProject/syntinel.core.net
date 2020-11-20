@@ -188,6 +188,7 @@ namespace Syntinel.Core
                 }
                 else
                 {
+                    reply.SignalDbRecord = signal;
                     CueRequest request = new CueRequest
                     {
                         ActionId = actionId,

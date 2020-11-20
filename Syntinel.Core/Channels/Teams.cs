@@ -69,6 +69,19 @@ namespace Syntinel.Core
             return cue;
         }
 
+        public static string FormatResponse(Cue cue, CueReply reply)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Action Received");
+            sb.Append($" | Signal Id = {reply.Id}");
+            sb.Append($" | Action Id = {reply.ActionId}");
+            foreach (MultiValueVariable variable in cue.Variables)
+                sb.Append($" | {variable.Name} = {String.Join(',', variable.Values)}");
+
+            return sb.ToString();
+        }
+
+
         public static Cue CreateCueOld(Dictionary<string, object> reply)
         {
             Cue cue = new Cue();

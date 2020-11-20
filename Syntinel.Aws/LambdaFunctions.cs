@@ -86,20 +86,24 @@ namespace Syntinel.Aws
             Cue cue = Slack.CreateCue(reply);
             CueReply cueReply = processor.ReceiveCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
-            Slack.SendResponse(cue.Payload.ResponseUrl, JsonTools.Serialize(cueReply));
+            String slackReply = Slack.FormatResponse(cue, cueReply);
+            processor.Logger.Info(slackReply);
+            Slack.SendResponse(cue.Payload.ResponseUrl, slackReply);
         }
 
-        public CueReply CueSubscriberTeams(Dictionary<string,object> reply, ILambdaContext ctx)
+        public string CueSubscriberTeams(Dictionary<string,object> reply, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Teams.CreateCue(reply);
             CueReply cueReply = processor.ReceiveCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
-            return cueReply;
+            String teamsReply = Teams.FormatResponse(cue, cueReply);
+            processor.Logger.Info(teamsReply);
+            return teamsReply;
         }
 
-        public CueReply CueSubscriberAzureBotService(Dictionary<string, object> reply, ILambdaContext ctx)
+        public string CueSubscriberAzureBotService(Dictionary<string, object> reply, ILambdaContext ctx)
         {
             //TODO : Implement Me
             return null;

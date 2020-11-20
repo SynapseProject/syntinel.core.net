@@ -23,5 +23,8 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "time")]
         public DateTime Time { get; set; }
+
+        [JsonIgnore]
+        public SignalDbRecord SignalDbRecord { get; set; }
     }
 }
