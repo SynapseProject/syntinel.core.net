@@ -61,7 +61,8 @@ namespace Syntinel.Core
             Cue cue = new Cue
             {
                 Id = signalId,
-                CueId = cueId
+                CueId = cueId,
+                Payload = payload
             };
 
             foreach (SlackReplyAction actionReply in payload.Actions)
@@ -78,8 +79,13 @@ namespace Syntinel.Core
                 cue.Variables.Add(actionVariable);
             }
 
-
             return cue;
+        }
+
+        public static void SendResponse(string responseUrl, string message)
+        {
+            string body = "{ 'text': '" + message + "' }";
+            Utils.PostMessage(responseUrl, body);
         }
 
         public static void SendMessage(string webHook, SlackMessage message)

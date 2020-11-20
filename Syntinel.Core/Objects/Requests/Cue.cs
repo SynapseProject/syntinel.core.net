@@ -16,6 +16,9 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "variables")]
         public List<MultiValueVariable> Variables { get; set; } = new List<MultiValueVariable>();
+
+        [JsonIgnore]
+        public SlackPayload Payload { get; set; }
     }
 
     public class MultiValueVariable

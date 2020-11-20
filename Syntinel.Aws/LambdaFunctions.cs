@@ -79,14 +79,14 @@ namespace Syntinel.Aws
             return reply;
         }
 
-        public CueReply CueSubscriberSlack(SlackReply reply, ILambdaContext ctx)
+        public void CueSubscriberSlack(SlackReply reply, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Slack.CreateCue(reply);
             CueReply cueReply = processor.ReceiveCue(cue);
             processor.Logger.Info(JsonTools.Serialize(cueReply));
-            return cueReply;
+            Slack.SendResponse(cue.Payload.ResponseUrl, JsonTools.Serialize(cueReply));
         }
 
         public CueReply CueSubscriberTeams(Dictionary<string,object> reply, ILambdaContext ctx)
