@@ -100,6 +100,7 @@ Resources:
           - ses:*
           - sns:*
           - sqs:*
+          - states:StartExecution
           - tag:GetResources
           - xray:PutTelemetryRecords
           - xray:PutTraceSegments
