@@ -16,11 +16,14 @@ public class AWSStepFunctionResolver : IResolver
         [JsonProperty(PropertyName = "arn")]
         public string Arn { get; set; }
 
-        [JsonProperty(PropertyName = "region")]
-        public string Region { get; set; }
+        [JsonProperty(PropertyName = "useDefaultName")]
+        public bool UseDefaultName { get; set; } = false;
+
+        [JsonProperty(PropertyName = "executionName")]
+        public string ExecutionName { get; set; }
     }
 
-    class ExecutionArn
+    class StepFunctionArn
     {
         private string _arn;
         private string[] _parts;
@@ -28,48 +31,68 @@ public class AWSStepFunctionResolver : IResolver
         public string Arn { get { return _arn; } set { _arn = value; _parts = _arn.Split(':'); } }
         public string Region { get { return _parts[3]; } }
         public string Account { get { return _parts[4]; } }
-        public string FunctionName { get { return _parts[6]; } }
-        public string Name { get { return _parts[7]; } }
+        public string Name { get { return _parts[6]; } }
+        public string ExecutionName { get { return _parts[7]; } }
 
-        public ExecutionArn(string arn)
+        public StepFunctionArn(string arn)
         {
             this.Arn = arn;
+            if (_parts.Length < 7)
+                throw new Exception($"Invalid ARN Provided [{arn}].");
         }
     }
 
     public Status ProcessRequest(ResolverRequest request)
     {
-        String cueId = request.CueId;
-        Config config = JsonTools.Convert<Config>(request.Signal.Cues[cueId].Resolver.Config);
-        RegionEndpoint region = RegionEndpoint.GetBySystemName(System.Environment.GetEnvironmentVariable("AWS_REGION"));
-        if (!String.IsNullOrEmpty(config.Region))
-            region = RegionEndpoint.GetBySystemName(config.Region);
-
-        AmazonStepFunctionsClient client = new AmazonStepFunctionsClient(region);   // Set Region
-
-        StartExecutionRequest exeRequest = new StartExecutionRequest
-        {
-            StateMachineArn = config.Arn,
-            Input = JsonTools.Serialize(request)
-        };
-
-        Task<StartExecutionResponse> t = client.StartExecutionAsync(exeRequest);
-        t.Wait(30000);
-        StartExecutionResponse response = t.Result;
-
         Status status = new Status();
         status.Id = request.Id;
         status.ActionId = request.ActionId;
-        if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
+
+        try
         {
-            ExecutionArn eArn = new ExecutionArn(response.ExecutionArn);
-            status.NewStatus = StatusType.SentToResolver;
-            status.Message = $"Request Sent To Step Function [{eArn.FunctionName}].  Execution Name [{eArn.Name}].";
+            String cueId = request.CueId;
+            Config config = JsonTools.Convert<Config>(request.Signal.Cues[cueId].Resolver.Config);
+            StepFunctionArn arn = new StepFunctionArn(config.Arn);
+            RegionEndpoint region = RegionEndpoint.GetBySystemName(System.Environment.GetEnvironmentVariable("AWS_REGION"));
+            if (!String.IsNullOrEmpty(arn.Region))
+                region = RegionEndpoint.GetBySystemName(arn.Region);
+
+            AmazonStepFunctionsClient client = new AmazonStepFunctionsClient(region);   // Set Region
+
+            StartExecutionRequest exeRequest = new StartExecutionRequest
+            {
+                StateMachineArn = config.Arn,
+                Input = JsonTools.Serialize(request)
+            };
+
+            if (config.UseDefaultName == false)
+            {
+                if (String.IsNullOrWhiteSpace(config.ExecutionName))
+                    exeRequest.Name = $"syntinel-{request.Id}-{request.ActionId}";
+                else
+                    exeRequest.Name = config.ExecutionName;
+            }
+
+            Task<StartExecutionResponse> t = client.StartExecutionAsync(exeRequest);
+            t.Wait(30000);
+            StartExecutionResponse response = t.Result;
+
+            if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
+            {
+                StepFunctionArn eArn = new StepFunctionArn(response.ExecutionArn);
+                status.NewStatus = StatusType.SentToResolver;
+                status.Message = $"Request Sent To Step Function [{eArn.Name}].  Execution Name [{eArn.ExecutionName}].";
+            }
+            else
+            {
+                status.NewStatus = StatusType.Error;
+                status.Message = $"Error Sending To Step Function [{arn.Name}].  {response.HttpStatusCode}";
+            }
         }
-        else
+        catch (Exception e)
         {
             status.NewStatus = StatusType.Error;
-            status.Message = $"Error Sending To Step Function [{config.Arn}].  {response.HttpStatusCode}";
+            status.Message = e.Message;
         }
 
         return status;

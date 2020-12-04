@@ -9,27 +9,33 @@ public class Echo : IResolver
     public Status ProcessRequest(ResolverRequest request)
     {
         Status status = new Status();
+        status.Id = request.Id;
+        status.ActionId = request.ActionId;
+
         Dictionary<object, object> data = new Dictionary<object, object>();
         StringBuilder sb = new StringBuilder();
 
-        //Dictionary<string, object> config = request.Signal.Cues[request.CueId].Resolver.Config;
-        //List<MultiValueVariable> variables = request.Actions[request.ActionId].Variables;
-
-        ActionType action = request.Actions[request.ActionId];
-        foreach (MultiValueVariable variable in action.Variables)
+        try
         {
-            data[variable.Name] = variable.Values;
-            if (sb.Length > 0)
-                sb.AppendLine();
-            sb.Append($"{variable.Name} = {String.Join(',', variable.Values)}");
-        }
+            ActionType action = request.Actions[request.ActionId];
+            foreach (MultiValueVariable variable in action.Variables)
+            {
+                data[variable.Name] = variable.Values;
+                if (sb.Length > 0)
+                    sb.AppendLine();
+                sb.Append($"{variable.Name} = {String.Join(',', variable.Values)}");
+            }
 
-        status.Id = request.Id;
-        status.ActionId = request.ActionId;
-        status.Message = sb.ToString();
-        status.Data = data;
-        status.NewStatus = StatusType.Completed;
-        status.CloseSignal = false;
+            status.Message = sb.ToString();
+            status.Data = data;
+            status.NewStatus = StatusType.Completed;
+            status.CloseSignal = false;
+        }
+        catch (Exception e)
+        {
+            status.NewStatus = StatusType.Error;
+            status.Message = e.Message;
+        }
 
         return status;
     }
