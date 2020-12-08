@@ -22,11 +22,12 @@
     </CustomCommands>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.3.17.8" />
-    <PackageReference Include="AWSSDK.Lambda" Version="3.3.19.20" />
-    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.5.0" />
-    <PackageReference Include="Amazon.Lambda.Core" Version="1.1.0" />
-    <PackageReference Include="AWSSDK.EC2" Version="3.3.84" />
+    <PackageReference Include="AWSSDK.DynamoDBv2" Version="3.5.4.5" />
+    <PackageReference Include="AWSSDK.Lambda" Version="3.5.4.2" />
+    <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.8.0" />
+    <PackageReference Include="Amazon.Lambda.Core" Version="1.2.0" />
+    <PackageReference Include="AWSSDK.EC2" Version="3.5.21.2" />
+    <PackageReference Include="AWSSDK.StepFunctions" Version="3.5.3.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Syntinel.Core\Syntinel.Core.csproj" />

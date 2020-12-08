@@ -162,7 +162,6 @@ namespace Syntinel.Core
 
         public CueReply ReceiveCue(Cue cue)
         {
-            //string actionId = "CUE_" + Utils.GenerateId();
             string actionId = Utils.GenerateId();
             CueReply reply = new CueReply
             {
