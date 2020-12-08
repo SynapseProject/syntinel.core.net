@@ -406,6 +406,10 @@ Resources:
           s3Key: !Ref SyntinelCodeBucketKey
 
 Outputs:
+  Version:
+    Description: Cloud Formation Template Version
+    Value: v0.1.201218-beta
+
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName

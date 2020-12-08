@@ -96,6 +96,10 @@ Resources:
         ReadCapacityUnits: "5"
         WriteCapacityUnits: "5"
 Outputs:
+  Version:
+    Description: Cloud Formation Template Version
+    Value: v0.1.201218-beta
+
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName

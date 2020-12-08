@@ -152,6 +152,10 @@ Resources:
       - !Ref SyntinelCorePolicy
       PermissionsBoundary: !If [ PolicyPermissionBoundryProvided, !Ref PolicyPermissionBoundry, !Ref "AWS::NoValue" ]
 Outputs:
+  Version:
+    Description: Cloud Formation Template Version
+    Value: v0.1.201218-beta
+
   StackName:
     Description: The name of this stack.
     Value:  !Ref AWS::StackName

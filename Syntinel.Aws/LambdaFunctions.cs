@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Syntinel.Core;
@@ -14,6 +15,7 @@ namespace Syntinel.Aws
         public LambdaConfig config = new LambdaConfig();
         public IDatabaseEngine db;
         public LambdaProcessor processor;
+        public string Version { get { return Assembly.GetExecutingAssembly().GetName().Version.ToString(); } }
 
         public LambdaFunctions()
         {
@@ -23,12 +25,13 @@ namespace Syntinel.Aws
 
         public string Hello(string input, ILambdaLogger log)
         {
-            return "Hello From Syntinel Core!";
+            return $"Hello From Syntinel Core! ({Version})";
         }
 
         public SignalReply ProcessSignal(Signal signal, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(signal));
             SignalReply reply = processor.ProcessSignal(signal);
             processor.Logger.Info(JsonTools.Serialize(reply));
@@ -38,6 +41,7 @@ namespace Syntinel.Aws
         public void ProcessCue(CueRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(request));
             processor.ProcessCue(request);
         }
@@ -45,6 +49,7 @@ namespace Syntinel.Aws
         public StatusReply ProcessStatus(Status status, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(status));
             StatusReply reply = processor.ProcessStatus(status);
             processor.Logger.Info(JsonTools.Serialize(reply));
@@ -54,6 +59,7 @@ namespace Syntinel.Aws
         public SlackMessage SignalPublisherSlack(ChannelRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(request));
             SlackMessage reply = Slack.Publish(request);
             processor.Logger.Info(JsonTools.Serialize(reply));
@@ -63,6 +69,7 @@ namespace Syntinel.Aws
         public MessageCard SignalPublisherTeams(ChannelRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(request));
             MessageCard reply = Teams.Publish(request);
             processor.Logger.Info(JsonTools.Serialize(reply));
@@ -72,6 +79,7 @@ namespace Syntinel.Aws
         public AzureBotServiceMessage SignalPublisherAzureBotService(ChannelRequest request, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(request));
             AzureBotService abs = new AzureBotService();
             AzureBotServiceMessage reply = abs.Publish(request);
@@ -82,6 +90,7 @@ namespace Syntinel.Aws
         public void CueSubscriberSlack(SlackReply reply, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Slack.CreateCue(reply);
             CueReply cueReply = processor.ReceiveCue(cue);
@@ -94,6 +103,7 @@ namespace Syntinel.Aws
         public string CueSubscriberTeams(Dictionary<string,object> reply, ILambdaContext ctx)
         {
             processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
             processor.Logger.Info(JsonTools.Serialize(reply));
             Cue cue = Teams.CreateCue(reply);
             CueReply cueReply = processor.ReceiveCue(cue);
