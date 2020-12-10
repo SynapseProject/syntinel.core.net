@@ -5,11 +5,11 @@ using System.Runtime.CompilerServices;
 // Change them to the values specific to your project.
 
 [assembly: AssemblyTitle("Syntinel.Aws")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("AWS Implemention of Syntinel.Core")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("${AuthorCopyright}")]
+[assembly: AssemblyProduct("Syntinel.Aws")]
+[assembly: AssemblyCopyright("Copyright © Guy Waguespack, 2020 - 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
