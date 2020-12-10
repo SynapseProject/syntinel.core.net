@@ -8,23 +8,41 @@ namespace Syntinel.Version
     {
         static void Main(string[] args)
         {
-            string filename = args[0];
+            string projectDir = args[0];
+            string projectName = Path.GetFileName(projectDir);  // Since ${ProjectDir} Doesn't Include Trailing Slash
+
+            Console.WriteLine($">>> Project Dir  : {projectDir}");
+            Console.WriteLine($">>> Project Name : {projectName}");
 
             int major = 0;
             int minor = 1;
             int build = (DateTime.Today.Year - 2000) * 1000 + DateTime.Today.DayOfYear;
             int revision = 0;
+            string version = $"{major}.{minor}.{build}.{revision}";
 
-            string[] versions = { $"{major}.{minor}.{build}.{revision}" };
+            // Update AssemblyInfo.cs
+            string[] versions = { version };
             string[] patterns = {
                 "AssemblyVersion\\(\"(.*)\"\\)",
                 "AssemblyFileVersion\\(\"(.*)\"\\)"
             };
 
-            foreach (string arg in args)
-                Console.WriteLine(">>>>> " + arg);
-
+            string filename = projectDir + "/Properties/AssemblyInfo.cs";
+            Console.WriteLine($">>> AssemblyFile : {filename}");
             RegexReplace(filename, patterns, versions);
+
+            // Update Cloud Formation Templates
+            if ("Syntinel.Aws".Equals(projectName))
+            {
+                string templatesDir = $"{projectDir}/cf-templates";
+                foreach (string template in Directory.GetFiles(templatesDir, "*.yaml"))
+                    Console.WriteLine($">>> Template     : {template}");
+
+                templatesDir = $"{projectDir}/cf-templates/stacks";
+                foreach (string template in Directory.GetFiles(templatesDir, "*.yaml"))
+                    Console.WriteLine($">>> Template     : {template}");
+            }
+
         }
 
         static void RegexReplace(string file, string pattern, string value)
@@ -46,7 +64,6 @@ namespace Syntinel.Version
                     Match match = r.Match(line);
                     if (match.Success)
                     {
-                        Console.WriteLine(line);
                         for (int j = 1; j < match.Groups.Count; j++)
                             if (values.Length > (j - 1))
                             {

@@ -22,7 +22,7 @@
         </Command>
         <Command>
           <type>BeforeBuild</type>
-          <command>dotnet Syntinel.Version.dll ${ProjectDir}/Properties/AssemblyInfo.cs</command>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
           <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
         </Command>
       </CustomCommands>
@@ -33,7 +33,7 @@
       <CustomCommands>
         <Command>
           <type>BeforeBuild</type>
-          <command>dotnet Syntinel.Version.dll ${ProjectDir}/Properties/AssemblyInfo.cs</command>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
           <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
         </Command>
       </CustomCommands>
