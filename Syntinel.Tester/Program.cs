@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using Syntinel.Core;
 using Syntinel.Aws;
+using Syntinel.Version;
 
 using Amazon;
 using Amazon.EC2.Model;
@@ -40,17 +41,17 @@ namespace Syntinel.Tester
 
 
             /*** Send Teams Cue Response ***/
-            int cueCount = 1;
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
-            string fileStr = reader.ReadToEnd();
-            Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
-            Cue cue = Teams.CreateCue(reply);
-            Parallel.For(0, cueCount, index =>
-             {
-                 string num = $"{index}".PadLeft(4, '0');
-                 CueReply cueReply = processor.ReceiveCue(cue);
-                 Console.WriteLine($"{num} - {JsonTools.Serialize(cueReply)}");
-             });
+            //int cueCount = 1;
+            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Cue-Teams.json", FileMode.Open));
+            //string fileStr = reader.ReadToEnd();
+            //Dictionary<string, object> reply = JsonConvert.DeserializeObject<Dictionary<string, object>>(fileStr);
+            //Cue cue = Teams.CreateCue(reply);
+            //Parallel.For(0, cueCount, index =>
+            // {
+            //     string num = $"{index}".PadLeft(4, '0');
+            //     CueReply cueReply = processor.ReceiveCue(cue);
+            //     Console.WriteLine($"{num} - {JsonTools.Serialize(cueReply)}");
+            // });
 
 
             /*** Stress Test Status Messages ***/
@@ -77,6 +78,11 @@ namespace Syntinel.Tester
             //status.NewStatus = StatusType.Completed;
             //status.SendToChannels = false;
             //processor.ProcessStatus(status);
+
+
+            /*** Test Syntinel.Version ***/
+            //string[] vArgs = { "/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Aws" };
+            //Syntinel.Version.Program.Main(vArgs);
         }
     }
 }

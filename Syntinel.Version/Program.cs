@@ -4,9 +4,9 @@ using System.Text.RegularExpressions;
 
 namespace Syntinel.Version
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
             string projectDir = args[0];
             string projectName = Path.GetFileName(projectDir);  // Since ${ProjectDir} Doesn't Include Trailing Slash
@@ -36,11 +36,11 @@ namespace Syntinel.Version
             {
                 string templatesDir = $"{projectDir}/cf-templates";
                 foreach (string template in Directory.GetFiles(templatesDir, "*.yaml"))
-                    Console.WriteLine($">>> Template     : {template}");
+                    YamlReplace(template, "Outputs.Version.Value", version);
 
                 templatesDir = $"{projectDir}/cf-templates/stacks";
                 foreach (string template in Directory.GetFiles(templatesDir, "*.yaml"))
-                    Console.WriteLine($">>> Template     : {template}");
+                    YamlReplace(template, "Outputs.Version.Value", version);
             }
 
         }
@@ -60,8 +60,7 @@ namespace Syntinel.Version
                 string line = content[i];
                 foreach (string pattern in patterns)
                 {
-                    Regex r = new Regex(pattern);
-                    Match match = r.Match(line);
+                    Match match = Regex.Match(line, pattern);
                     if (match.Success)
                     {
                         for (int j = 1; j < match.Groups.Count; j++)
@@ -76,6 +75,42 @@ namespace Syntinel.Version
             }
 
             File.WriteAllLines(file, content);
+        }
+
+        static void YamlReplace(string file, string path, string value)
+        {
+            string[] parts = path.Split('.');
+            string[] content = File.ReadAllLines(file);
+
+            int partIndex = 0;
+            int indention = -1;
+            bool found = false;
+
+            for (int i=0; i<content.Length; i++)
+            {
+                string line = content[i];
+                string pattern = $"^(\\s*){parts[partIndex]}";
+                Match match = Regex.Match(line, pattern);
+                if (match.Success)
+                {
+                    string spaces = match.Groups[1].Value;
+                    if (partIndex == parts.Length - 1)
+                    {
+                        found = true;
+                        content[i] = $"{spaces}{parts[partIndex]}: {value}";
+                        break;
+                    }
+                    else if (spaces.Length > indention)
+                    {
+                        partIndex++;
+                        indention = spaces.Length;
+                    }
+                }
+            }
+
+            if (found)
+                File.WriteAllLines(file, content);
+
         }
     }
 }
