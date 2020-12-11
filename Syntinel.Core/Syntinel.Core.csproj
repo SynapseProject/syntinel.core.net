@@ -6,6 +6,28 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>BeforeBuild</type>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
+          <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>BeforeBuild</type>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
+          <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Objects\" />
     <Folder Include="Objects\Requests\" />
@@ -26,5 +48,8 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SlackAPI" Version="1.1.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Syntinel.Version\Syntinel.Version.csproj" />
   </ItemGroup>
 </Project>

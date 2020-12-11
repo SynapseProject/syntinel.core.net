@@ -7,9 +7,32 @@
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>BeforeBuild</type>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
+          <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CustomCommands>
+      <CustomCommands>
+        <Command>
+          <type>BeforeBuild</type>
+          <command>dotnet Syntinel.Version.dll ${ProjectDir}</command>
+          <workingdir>${SolutionDir}/Syntinel.Version/bin/${ProjectConfig}/netcoreapp3.1</workingdir>
+        </Command>
+      </CustomCommands>
+    </CustomCommands>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Syntinel.Core\Syntinel.Core.csproj" />
     <ProjectReference Include="..\Syntinel.Aws\Syntinel.Aws.csproj" />
+    <ProjectReference Include="..\Syntinel.Version\Syntinel.Version.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.8.0" />

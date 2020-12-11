@@ -1,15 +1,15 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
 
 [assembly: AssemblyTitle("Syntinel.Tester")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Programmer Tester for Syntinel")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("${AuthorCopyright}")]
+[assembly: AssemblyProduct("Syntinel.Tester")]
+[assembly: AssemblyCopyright("Copyright ? Guy Waguespack, 2019 - 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -17,7 +17,8 @@ using System.Runtime.CompilerServices;
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 
-[assembly: AssemblyVersion("0.1.*")]
+[assembly: AssemblyVersion("0.1.20346.0")]
+[assembly: AssemblyFileVersion("0.1.20346.0")]
 
 // The following attributes are used to specify the signing key for the assembly, 
 // if desired. See the Mono documentation for more information about signing.
