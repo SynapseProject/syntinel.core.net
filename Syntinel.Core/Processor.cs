@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Collections;
 using System.Reflection;
 
 namespace Syntinel.Core
@@ -324,6 +325,51 @@ namespace Syntinel.Core
             }
 
             return reply;
+        }
+
+        public List<ExportRecord> ExportData(bool includeSignals = false)
+        {
+            List<ExportRecord> export = new List<ExportRecord>();
+            string[] exportTypes =
+            {
+                "Syntinel.Core.ReporterDbRecord",
+                "Syntinel.Core.ChannelDbRecord",
+                "Syntinel.Core.RouterDbRecord",
+                "Syntinel.Core.TemplateDbRecord",
+            };
+
+            foreach (string type in exportTypes)
+            {
+                ExportRecord typeExport = new ExportRecord();
+                typeExport.type = type;
+                typeExport.records = GetRecords(type);
+                export.Add(typeExport);
+            }
+
+            if (includeSignals)
+            {
+                string signalType = "Syntinel.Core.SignalDbRecord";
+                ExportRecord typeExport = new ExportRecord();
+                typeExport.type = signalType;
+                typeExport.records = GetRecords(signalType);
+                export.Add(typeExport);
+            }
+
+            return export;
+        }
+
+        private List<object> GetRecords(string type)
+        {
+            List<object> objects = new List<object>();
+            MethodInfo method = DbEngine.GetType().GetMethod("Export", BindingFlags.Instance | BindingFlags.Public);
+            Type t = Type.GetType(type);
+            MethodInfo typedMethod = method.MakeGenericMethod(t);
+            IEnumerable records = (IEnumerable)typedMethod.Invoke(DbEngine, null);
+
+            foreach (var record in records)
+                objects.Add(record);
+
+            return objects;
         }
 
         private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)

@@ -21,9 +21,14 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
+            /*** Export Database Records ***/
             DynamoDbEngine db = new DynamoDbEngine();
             Processor processor = new Processor(db);
             ILogger logger = new ConsoleLogger();
+
+            List<ExportRecord> export = processor.ExportData(true);
+            File.WriteAllText("/Users/guy/Desktop/export.json", JsonTools.Serialize(export, true));
+            Console.WriteLine(JsonTools.Serialize(export, true));
 
 
             /*** Send Signal Message ***/

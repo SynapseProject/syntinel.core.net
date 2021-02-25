@@ -89,6 +89,39 @@ namespace Syntinel.Aws
             return dbRecord;
         }
 
+        public List<T> Export<T>()
+        {
+            List<T> records = new List<T>();
+
+            string tableName = GetTableName(typeof(T));
+            Table table = Table.LoadTable(client, tableName);
+
+            ScanFilter filter = new ScanFilter();
+            Search search = table.Scan(filter);
+            List<Document> documents = new List<Document>();
+            Task<List<Document>> task;
+            do
+            {
+                task = search.GetNextSetAsync();
+                task.Wait(defaultTimeout);
+                documents = task.Result;
+                foreach (Document document in documents)
+                {
+                    records.Add(JsonTools.Deserialize<T>(document.ToJson()));
+                }
+
+            } while (!search.IsDone);
+
+
+            return records;
+        }
+
+        public void Import<T>(List<T> records)
+        {
+            foreach (T record in records)
+                Create<T>(record);
+        }
+
         public T Create<T>(T record, bool failIfExists = false)
         {
             string tableName = GetTableName(typeof(T));
