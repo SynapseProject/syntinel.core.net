@@ -332,26 +332,21 @@ namespace Syntinel.Core
             List<ExportRecord> export = new List<ExportRecord>();
             string[] exportTypes =
             {
-                "Syntinel.Core.ReporterDbRecord",
-                "Syntinel.Core.ChannelDbRecord",
-                "Syntinel.Core.RouterDbRecord",
-                "Syntinel.Core.TemplateDbRecord",
+                "ReporterDbRecord",
+                "ChannelDbRecord",
+                "RouterDbRecord",
+                "TemplateDbRecord",
+                "SignalDbRecord"
             };
 
             foreach (string type in exportTypes)
             {
+                if (type == "SignalDbRecord" && !includeSignals)
+                    continue;
+
                 ExportRecord typeExport = new ExportRecord();
                 typeExport.type = type;
                 typeExport.records = GetRecords(type);
-                export.Add(typeExport);
-            }
-
-            if (includeSignals)
-            {
-                string signalType = "Syntinel.Core.SignalDbRecord";
-                ExportRecord typeExport = new ExportRecord();
-                typeExport.type = signalType;
-                typeExport.records = GetRecords(signalType);
                 export.Add(typeExport);
             }
 
@@ -362,7 +357,7 @@ namespace Syntinel.Core
         {
             List<object> objects = new List<object>();
             MethodInfo method = DbEngine.GetType().GetMethod("Export", BindingFlags.Instance | BindingFlags.Public);
-            Type t = Type.GetType(type);
+            Type t = Type.GetType("Syntinel.Core." + type);
             MethodInfo typedMethod = method.MakeGenericMethod(t);
             IEnumerable records = (IEnumerable)typedMethod.Invoke(DbEngine, null);
 
