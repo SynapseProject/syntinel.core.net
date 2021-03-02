@@ -8,6 +8,8 @@ using Syntinel.Core;
 using Syntinel.Aws;
 using Syntinel.Version;
 
+using Zephyr.Filesystem;
+
 using Amazon;
 using Amazon.EC2.Model;
 
@@ -27,8 +29,10 @@ namespace Syntinel.Tester
             ILogger logger = new ConsoleLogger();
 
             List<ExportRecord> export = processor.ExportData(true);
-            File.WriteAllText("/Users/guy/Desktop/export.json", JsonTools.Serialize(export, true));
-            Console.WriteLine(JsonTools.Serialize(export, true));
+            ZephyrFile file = new WindowsZephyrFile("/Users/guy/Desktop/export.json");
+            file.WriteAllText(JsonTools.Serialize(export, true));
+
+            Console.WriteLine("Completed");
 
 
             /*** Send Signal Message ***/
