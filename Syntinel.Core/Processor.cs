@@ -353,6 +353,12 @@ namespace Syntinel.Core
             return export;
         }
 
+        public void ImportData(List<ExportRecord> records)
+        {
+            foreach (ExportRecord recordType in records)
+                SaveRecords(recordType);
+        }
+
         private List<object> GetRecords(string type)
         {
             List<object> objects = new List<object>();
@@ -365,6 +371,16 @@ namespace Syntinel.Core
                 objects.Add(record);
 
             return objects;
+        }
+
+        private void SaveRecords(ExportRecord exportRecord)
+        {
+            MethodInfo method = DbEngine.GetType().GetMethod("Import", BindingFlags.Instance | BindingFlags.Public);
+            Type t = Type.GetType("Syntinel.Core." + exportRecord.type);
+            MethodInfo typedMethod = method.MakeGenericMethod(t);
+            object[] parms = new object[1];
+            parms[0] = exportRecord.records;
+            typedMethod.Invoke(DbEngine, parms);
         }
 
         private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)

@@ -116,10 +116,13 @@ namespace Syntinel.Aws
             return records;
         }
 
-        public void Import<T>(List<T> records)
+        public void Import<T>(List<object> records)
         {
-            foreach (T record in records)
-                Create<T>(record);
+            foreach (object record in records)
+            {
+                T typedRecord = JsonTools.Convert<T>(record);
+                Create<T>(typedRecord);
+            }
         }
 
         public T Create<T>(T record, bool failIfExists = false)

@@ -15,6 +15,6 @@ namespace Syntinel.Core
 
         // Import/Export All Records From A Table
         List<T> Export<T>();
-        void Import<T>(List<T> records);
+        void Import<T>(List<object> records);
     }
 }
