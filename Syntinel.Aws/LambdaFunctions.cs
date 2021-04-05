@@ -121,13 +121,23 @@ namespace Syntinel.Aws
             return null;
         }
 
-        public void ExportDatabase(ExportRequest request, ILambdaContext ctx)
+        public void ExportDatabase(ExportImportRequest request, ILambdaContext ctx)
         {
             List<ExportRecord> export = processor.ExportData(request.IncludeSignals);
             AwsClient client = new AwsClient();
             ZephyrFile file = new AwsS3ZephyrFile(client, request.FileName);
             file.Create();
             file.WriteAllText(JsonTools.Serialize(export, true));
+        }
+
+        public void ImportDatabase(ExportImportRequest request, ILambdaContext ctx)
+        {
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, request.FileName);
+            file.Open(AccessType.Read);
+            string importText = file.ReadAllText();
+            List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            processor.ImportData(records);
         }
     }
 

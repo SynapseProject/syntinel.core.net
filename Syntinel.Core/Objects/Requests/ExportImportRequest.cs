@@ -6,7 +6,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace Syntinel.Core
 {
-    public class ExportRequest
+    public class ExportImportRequest
     {
         [JsonProperty(PropertyName = "filename")]
         public string FileName { get; set; }

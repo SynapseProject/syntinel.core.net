@@ -28,17 +28,20 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db);
             processor.Logger = new ConsoleLogger();
 
+            /*** Export To S3 Bucket ***/
             //List<ExportRecord> export = processor.ExportData(false);
-            AwsClient client = new AwsClient();
-            ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
+            //AwsClient client = new AwsClient();
+            //ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
             //file.Create();
             //file.WriteAllText(JsonTools.Serialize(export, true));
 
-
+            /*** Import From S3 Bucket ***/
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
             file.Open(AccessType.Read);
             string importText = file.ReadAllText();
             List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
-            processor.ImportData(records);
+            processor.ImportData(records, false);
 
 
             Console.WriteLine("Completed");

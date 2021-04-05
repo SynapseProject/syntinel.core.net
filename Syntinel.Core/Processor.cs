@@ -354,10 +354,13 @@ namespace Syntinel.Core
             return export;
         }
 
-        public void ImportData(List<ExportRecord> records)
+        public void ImportData(List<ExportRecord> records, bool includeSignals = false)
         {
             foreach (ExportRecord recordType in records)
             {
+                if (!includeSignals && recordType.type == "SignalDbRecord")
+                    continue;
+
                 int saved = SaveRecords(recordType);
                 Logger.Info($"Imported {saved} {recordType.type} Records.");
             }
