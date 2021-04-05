@@ -2,6 +2,8 @@
 using System.Reflection;
 using System.Collections.Generic;
 
+using Zephyr.Filesystem;
+
 using Syntinel.Core;
 using Amazon.Lambda.Core;
 
@@ -117,6 +119,15 @@ namespace Syntinel.Aws
         {
             //TODO : Implement Me
             return null;
+        }
+
+        public void ExportDatabase(ExportRequest request, ILambdaContext ctx)
+        {
+            List<ExportRecord> export = processor.ExportData(request.IncludeSignals);
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, request.FileName);
+            file.Create();
+            file.WriteAllText(JsonTools.Serialize(export, true));
         }
     }
 

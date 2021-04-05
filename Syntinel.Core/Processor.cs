@@ -348,6 +348,7 @@ namespace Syntinel.Core
                 typeExport.type = type;
                 typeExport.records = GetRecords(type);
                 export.Add(typeExport);
+                Logger.Info($"Exported {typeExport.records.Count} {type} Records.");
             }
 
             return export;
@@ -356,7 +357,10 @@ namespace Syntinel.Core
         public void ImportData(List<ExportRecord> records)
         {
             foreach (ExportRecord recordType in records)
-                SaveRecords(recordType);
+            {
+                int saved = SaveRecords(recordType);
+                Logger.Info($"Imported {saved} {recordType.type} Records.");
+            }
         }
 
         private List<object> GetRecords(string type)
@@ -373,14 +377,15 @@ namespace Syntinel.Core
             return objects;
         }
 
-        private void SaveRecords(ExportRecord exportRecord)
+        private int SaveRecords(ExportRecord exportRecord)
         {
             MethodInfo method = DbEngine.GetType().GetMethod("Import", BindingFlags.Instance | BindingFlags.Public);
             Type t = Type.GetType("Syntinel.Core." + exportRecord.type);
             MethodInfo typedMethod = method.MakeGenericMethod(t);
             object[] parms = new object[1];
             parms[0] = exportRecord.records;
-            typedMethod.Invoke(DbEngine, parms);
+            int count = (int)typedMethod.Invoke(DbEngine, parms);
+            return count;
         }
 
         private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)

@@ -26,18 +26,19 @@ namespace Syntinel.Tester
             /*** Export Database Records ***/
             DynamoDbEngine db = new DynamoDbEngine();
             Processor processor = new Processor(db);
-            ILogger logger = new ConsoleLogger();
+            processor.Logger = new ConsoleLogger();
 
-            List<ExportRecord> export = processor.ExportData(false);
+            //List<ExportRecord> export = processor.ExportData(false);
             AwsClient client = new AwsClient();
             ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
-            file.Create();
-            file.WriteAllText(JsonTools.Serialize(export, true));
+            //file.Create();
+            //file.WriteAllText(JsonTools.Serialize(export, true));
 
 
-            //string importText = file.ReadAllText();
-            //List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
-            //processor.ImportData(records);
+            file.Open(AccessType.Read);
+            string importText = file.ReadAllText();
+            List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            processor.ImportData(records);
 
 
             Console.WriteLine("Completed");

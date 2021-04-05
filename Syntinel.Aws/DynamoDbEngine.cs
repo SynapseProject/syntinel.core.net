@@ -111,7 +111,6 @@ namespace Syntinel.Aws
                     records.Add(JsonTools.Deserialize<T>(document.ToJson()));
                     exportedCount++;
                 }
-                Console.WriteLine($"Exported {exportedCount} {typeof(T)} Records.");
 
             } while (!search.IsDone);
 
@@ -119,7 +118,7 @@ namespace Syntinel.Aws
             return records;
         }
 
-        public void Import<T>(List<object> records)
+        public int Import<T>(List<object> records)
         {
             int imported = 0;
             foreach (object record in records)
@@ -128,7 +127,7 @@ namespace Syntinel.Aws
                 Create<T>(typedRecord);
                 imported++;
             }
-            Console.WriteLine($"Imported {imported} {typeof(T)} Records.");
+            return imported;
         }
 
         public T Create<T>(T record, bool failIfExists = false)
