@@ -9,6 +9,9 @@ namespace Syntinel.Core
 {
     public class ChannelDbRecord : Templatable<ChannelDbRecord>
     {
+        [JsonProperty(PropertyName = "_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string Id { get; set; }
+
         [JsonProperty(PropertyName = "name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
 

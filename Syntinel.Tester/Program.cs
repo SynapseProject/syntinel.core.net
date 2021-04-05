@@ -28,9 +28,17 @@ namespace Syntinel.Tester
             Processor processor = new Processor(db);
             ILogger logger = new ConsoleLogger();
 
-            List<ExportRecord> export = processor.ExportData(true);
-            ZephyrFile file = new WindowsZephyrFile("/Users/guy/Desktop/export.json");
+            List<ExportRecord> export = processor.ExportData(false);
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
+            file.Create();
             file.WriteAllText(JsonTools.Serialize(export, true));
+
+
+            //string importText = file.ReadAllText();
+            //List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            //processor.ImportData(records);
+
 
             Console.WriteLine("Completed");
 

@@ -105,10 +105,13 @@ namespace Syntinel.Aws
                 task = search.GetNextSetAsync();
                 task.Wait(defaultTimeout);
                 documents = task.Result;
+                int exportedCount = 0;
                 foreach (Document document in documents)
                 {
                     records.Add(JsonTools.Deserialize<T>(document.ToJson()));
+                    exportedCount++;
                 }
+                Console.WriteLine($"Exported {exportedCount} {typeof(T)} Records.");
 
             } while (!search.IsDone);
 
@@ -118,11 +121,14 @@ namespace Syntinel.Aws
 
         public void Import<T>(List<object> records)
         {
+            int imported = 0;
             foreach (object record in records)
             {
                 T typedRecord = JsonTools.Convert<T>(record);
                 Create<T>(typedRecord);
+                imported++;
             }
+            Console.WriteLine($"Imported {imported} {typeof(T)} Records.");
         }
 
         public T Create<T>(T record, bool failIfExists = false)
