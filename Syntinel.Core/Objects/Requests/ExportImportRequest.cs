@@ -12,6 +12,6 @@ namespace Syntinel.Core
         public string FileName { get; set; }
 
         [JsonProperty(PropertyName = "include-signals")]
-        public bool IncludeSignals { get; set; }
+        public bool IncludeSignals { get; set; } = false;
     }
 }

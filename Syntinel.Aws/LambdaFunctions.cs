@@ -121,23 +121,62 @@ namespace Syntinel.Aws
             return null;
         }
 
-        public void ExportDatabase(ExportImportRequest request, ILambdaContext ctx)
+        public ExportImportReply ExportDatabase(ExportImportRequest request, ILambdaContext ctx)
         {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
+            processor.Logger.Info(JsonTools.Serialize(request));
+
+            string filename = Utils.GetValue(request.FileName, "DefaultExportImportFile", null);
+
             List<ExportRecord> export = processor.ExportData(request.IncludeSignals);
             AwsClient client = new AwsClient();
-            ZephyrFile file = new AwsS3ZephyrFile(client, request.FileName);
-            file.Create();
+            ZephyrFile file = new AwsS3ZephyrFile(client, filename);
+            file.Create(true, false);
             file.WriteAllText(JsonTools.Serialize(export, true));
+
+            ExportImportReply reply = new ExportImportReply();
+            reply.Action = "Export";
+            reply.FileName = filename;
+            foreach (ExportRecord record in export)
+            {
+                ExportImportType type = new ExportImportType();
+                type.Type = record.type;
+                type.Count = record.records.Count;
+                reply.Records.Add(type);
+            }
+
+            return reply;
         }
 
-        public void ImportDatabase(ExportImportRequest request, ILambdaContext ctx)
+        public ExportImportReply ImportDatabase(ExportImportRequest request, ILambdaContext ctx)
         {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
+            processor.Logger.Info(JsonTools.Serialize(request));
+
+            string filename = Utils.GetValue(request.FileName, "DefaultExportImportFile", null);
+
             AwsClient client = new AwsClient();
-            ZephyrFile file = new AwsS3ZephyrFile(client, request.FileName);
-            file.Open(AccessType.Read);
+            ZephyrFile file = new AwsS3ZephyrFile(client, filename);
+            file.Open(AccessType.Read, false);
             string importText = file.ReadAllText();
             List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
-            processor.ImportData(records);
+            processor.ImportData(records, request.IncludeSignals);
+
+            ExportImportReply reply = new ExportImportReply();
+            reply.Action = "Import";
+            reply.FileName = filename;
+            foreach (ExportRecord record in records)
+            {
+                ExportImportType type = new ExportImportType();
+                type.Type = record.type;
+                type.Count = record.records.Count;
+                reply.Records.Add(type);
+            }
+
+            return reply;
+
         }
     }
 
