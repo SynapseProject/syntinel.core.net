@@ -422,6 +422,8 @@ Resources:
               - !Ref SyntinelCueSubscriberTeams
               - !Ref SyntinelSignalPublisherSlack
               - !Ref SyntinelCueSubscriberSlack
+              - !Ref SyntinelExportDatabaseFunction
+              - !Ref SyntinelImportDatabaseFunction
           s3Bucket: !Ref SyntinelCodeBucketName
           s3Key: !Ref SyntinelCodeBucketKey
 
@@ -439,7 +441,7 @@ Resources:
       Timeout: 300
       Environment:
         Variables:
-          DefaultExportImportFile: Fn:Join ["", ["s3://", !Ref SyntinelCodeBucketName, "/export/database.json"]]
+          DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
 
   SyntinelImportDatabaseFunction:
     Type: AWS::Lambda::Function
@@ -455,7 +457,7 @@ Resources:
       Timeout: 300
       Environment:
         Variables:
-          DefaultExportImportFile: Fn:Join ["", ["s3://", !Ref SyntinelCodeBucketName, "/export/database.json"]]
+          DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
 
 
 Outputs:
