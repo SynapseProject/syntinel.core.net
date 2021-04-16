@@ -135,6 +135,7 @@ namespace Syntinel.Aws
             file.Create(true, false);
             file.WriteAllText(JsonTools.Serialize(export, true));
 
+            // Build Reply Message
             ExportImportReply reply = new ExportImportReply();
             reply.Action = "Export";
             reply.FileName = filename;
@@ -164,11 +165,14 @@ namespace Syntinel.Aws
             List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
             processor.ImportData(records, request.IncludeSignals);
 
+            // Build Reply Message
             ExportImportReply reply = new ExportImportReply();
             reply.Action = "Import";
             reply.FileName = filename;
             foreach (ExportRecord record in records)
             {
+                if (!request.IncludeSignals && record.type == "SignalDbRecord")
+                    continue;
                 ExportImportType type = new ExportImportType();
                 type.Type = record.type;
                 type.Count = record.records.Count;
