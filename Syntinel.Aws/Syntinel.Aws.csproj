@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Deterministic>False</Deterministic>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
   
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -50,6 +51,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Syntinel.Core\Syntinel.Core.csproj" />
     <ProjectReference Include="..\Syntinel.Version\Syntinel.Version.csproj" />
+    <ProjectReference Include="..\Zephyr.FileSystem.net\Zephyr.FileSystem.net.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resolvers\" />

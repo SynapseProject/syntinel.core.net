@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Collections;
 using System.Reflection;
 
 namespace Syntinel.Core
@@ -324,6 +325,70 @@ namespace Syntinel.Core
             }
 
             return reply;
+        }
+
+        public List<ExportRecord> ExportData(bool includeSignals = false)
+        {
+            List<ExportRecord> export = new List<ExportRecord>();
+            string[] exportTypes =
+            {
+                "ReporterDbRecord",
+                "ChannelDbRecord",
+                "RouterDbRecord",
+                "TemplateDbRecord",
+                "SignalDbRecord"
+            };
+
+            foreach (string type in exportTypes)
+            {
+                if (type == "SignalDbRecord" && !includeSignals)
+                    continue;
+
+                ExportRecord typeExport = new ExportRecord();
+                typeExport.type = type;
+                typeExport.records = GetRecords(type);
+                export.Add(typeExport);
+                Logger.Info($"Exported {typeExport.records.Count} {type} Records.");
+            }
+
+            return export;
+        }
+
+        public void ImportData(List<ExportRecord> records, bool includeSignals = false)
+        {
+            foreach (ExportRecord recordType in records)
+            {
+                if (!includeSignals && recordType.type == "SignalDbRecord")
+                    continue;
+
+                int saved = SaveRecords(recordType);
+                Logger.Info($"Imported {saved} {recordType.type} Records.");
+            }
+        }
+
+        private List<object> GetRecords(string type)
+        {
+            List<object> objects = new List<object>();
+            MethodInfo method = DbEngine.GetType().GetMethod("Export", BindingFlags.Instance | BindingFlags.Public);
+            Type t = Type.GetType("Syntinel.Core." + type);
+            MethodInfo typedMethod = method.MakeGenericMethod(t);
+            IEnumerable records = (IEnumerable)typedMethod.Invoke(DbEngine, null);
+
+            foreach (var record in records)
+                objects.Add(record);
+
+            return objects;
+        }
+
+        private int SaveRecords(ExportRecord exportRecord)
+        {
+            MethodInfo method = DbEngine.GetType().GetMethod("Import", BindingFlags.Instance | BindingFlags.Public);
+            Type t = Type.GetType("Syntinel.Core." + exportRecord.type);
+            MethodInfo typedMethod = method.MakeGenericMethod(t);
+            object[] parms = new object[1];
+            parms[0] = exportRecord.records;
+            int count = (int)typedMethod.Invoke(DbEngine, parms);
+            return count;
         }
 
         private void SendStatusNotification(Status status, string reporterId, string routerId, string routerType)

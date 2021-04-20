@@ -9,22 +9,25 @@ namespace Syntinel.Core
 {
     public class ChannelDbRecord : Templatable<ChannelDbRecord>
     {
-        [JsonProperty(PropertyName = "name")]
+        [JsonProperty(PropertyName = "_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string Id { get; set; }
+
+        [JsonProperty(PropertyName = "name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "description")]
+        [JsonProperty(PropertyName = "description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        [JsonProperty(PropertyName = "type")]
+        [JsonProperty(PropertyName = "type", NullValueHandling = NullValueHandling.Ignore)]
         public string Type { get; set; }
 
-        [JsonProperty(PropertyName = "target")]
+        [JsonProperty(PropertyName = "target", NullValueHandling = NullValueHandling.Ignore)]
         public string Target { get; set; }
 
-        [JsonProperty(PropertyName = "config")]
+        [JsonProperty(PropertyName = "config", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<object, object> Config { get; set; }
 
-        [JsonProperty(PropertyName = "isActive")]
+        [JsonProperty(PropertyName = "isActive", NullValueHandling = NullValueHandling.Ignore)]
         public bool IsActive { get; set; } = true;
     }
 }

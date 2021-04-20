@@ -63,10 +63,10 @@ namespace Syntinel.Core
 
     public class TemplateVariableType
     {
-        [JsonProperty(PropertyName = "path")]
+        [JsonProperty(PropertyName = "path", NullValueHandling = NullValueHandling.Ignore)]
         public string Path { get; set; }
 
-        [JsonProperty(PropertyName = "replace")]
+        [JsonProperty(PropertyName = "replace", NullValueHandling = NullValueHandling.Ignore)]
         public string Replace { get; set; }     // If Present, A Regex String Replacement Will Occur.
     }
 }

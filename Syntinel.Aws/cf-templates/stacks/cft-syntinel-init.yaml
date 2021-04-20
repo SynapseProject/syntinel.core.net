@@ -1,12 +1,27 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates the initial RestApi for running the Syntinel application.
 
+Parameters:
+  ### S3 Locations
+  RestApiName:
+    Type: String
+    Default: syntinel
+    Description: (Required) The name for the REST Api.
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "API Gateway (Required)"
+      Parameters:
+      - RestApiName
+
 Resources:
   # Main Rest API
   RestApi:
     Type: AWS::ApiGateway::RestApi
     Properties:
-      Name: syntinel
+      Name: !Ref RestApiName
       Description: API Entry points for the Syntinel application.
       EndpointConfiguration:
         Types:
@@ -37,7 +52,7 @@ Resources:
 Outputs:
   Version:
     Description: Cloud Formation Template Version
-    Value: 0.1.20346.0
+    Value: 0.1.21110.0
 
   StackName:
     Description: The name of this stack.

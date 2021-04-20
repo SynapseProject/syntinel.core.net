@@ -2,6 +2,8 @@
 using System.Reflection;
 using System.Collections.Generic;
 
+using Zephyr.Filesystem;
+
 using Syntinel.Core;
 using Amazon.Lambda.Core;
 
@@ -117,6 +119,68 @@ namespace Syntinel.Aws
         {
             //TODO : Implement Me
             return null;
+        }
+
+        public ExportImportReply ExportDatabase(ExportImportRequest request, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
+            processor.Logger.Info(JsonTools.Serialize(request));
+
+            string filename = Utils.GetValue(request.FileName, "DefaultExportImportFile", null);
+
+            List<ExportRecord> export = processor.ExportData(request.IncludeSignals);
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, filename);
+            file.Create(true, false);
+            file.WriteAllText(JsonTools.Serialize(export, true));
+
+            // Build Reply Message
+            ExportImportReply reply = new ExportImportReply();
+            reply.Action = "Export";
+            reply.FileName = filename;
+            foreach (ExportRecord record in export)
+            {
+                ExportImportType type = new ExportImportType();
+                type.Type = record.type;
+                type.Count = record.records.Count;
+                reply.Records.Add(type);
+            }
+
+            return reply;
+        }
+
+        public ExportImportReply ImportDatabase(ExportImportRequest request, ILambdaContext ctx)
+        {
+            processor.Logger = new LambdaLogger(ctx.Logger);
+            processor.Logger.Info($"Version : {Version}");
+            processor.Logger.Info(JsonTools.Serialize(request));
+
+            string filename = Utils.GetValue(request.FileName, "DefaultExportImportFile", null);
+
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, filename);
+            file.Open(AccessType.Read, false);
+            string importText = file.ReadAllText();
+            List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            processor.ImportData(records, request.IncludeSignals);
+
+            // Build Reply Message
+            ExportImportReply reply = new ExportImportReply();
+            reply.Action = "Import";
+            reply.FileName = filename;
+            foreach (ExportRecord record in records)
+            {
+                if (!request.IncludeSignals && record.type == "SignalDbRecord")
+                    continue;
+                ExportImportType type = new ExportImportType();
+                type.Type = record.type;
+                type.Count = record.records.Count;
+                reply.Records.Add(type);
+            }
+
+            return reply;
+
         }
     }
 

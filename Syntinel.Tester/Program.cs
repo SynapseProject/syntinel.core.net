@@ -8,6 +8,8 @@ using Syntinel.Core;
 using Syntinel.Aws;
 using Syntinel.Version;
 
+using Zephyr.Filesystem;
+
 using Amazon;
 using Amazon.EC2.Model;
 
@@ -21,9 +23,28 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
+            /*** Export Database Records ***/
             DynamoDbEngine db = new DynamoDbEngine();
             Processor processor = new Processor(db);
-            ILogger logger = new ConsoleLogger();
+            processor.Logger = new ConsoleLogger();
+
+            /*** Export To S3 Bucket ***/
+            //List<ExportRecord> export = processor.ExportData(false);
+            //AwsClient client = new AwsClient();
+            //ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
+            //file.Create();
+            //file.WriteAllText(JsonTools.Serialize(export, true));
+
+            /*** Import From S3 Bucket ***/
+            AwsClient client = new AwsClient();
+            ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
+            file.Open(AccessType.Read);
+            string importText = file.ReadAllText();
+            List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            processor.ImportData(records, false);
+
+
+            Console.WriteLine("Completed");
 
 
             /*** Send Signal Message ***/

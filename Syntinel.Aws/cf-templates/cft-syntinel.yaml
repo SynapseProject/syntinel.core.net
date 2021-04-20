@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Runs all the individual templates to create the entire Syntinel application.
 
 Parameters:
+  ### Rest API
+  RestApiName:
+    Type: String
+    Default: syntinel
+    Description: (Required) The name for the REST Api.
+
   ### S3 Locations
   S3BucketName:
     Type: String
@@ -114,6 +120,12 @@ Parameters:
   LocalLambdaRoleUpdateLambdaFunctions:
     Type: String
     Description: (Optional) The name of the role to be used only with the update lambda functions function.  This overrides any Global roles or roles from the IAM CloudFormation stack.
+  LocalLambdaRoleExportDatabase:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda export database function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleImportDatabase:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda import database function.  This overrides any Global roles or roles from the CloudFormation stack.
   
     # Function Names
   ProcessSignalFunctionName:
@@ -132,8 +144,14 @@ Parameters:
     Type: String
     Default: syntinel-lambda-update
     Description: (Required) The name for the function that updates lambda functions from the s3 bucket.
-
-
+  ExportDatabaseFunctionName:
+    Type: String
+    Default: syntinel-database-export
+    Description: (Required) The name for the function that exports the syntinel database to an s3 bucket.
+  ImportDatabaseFunctionName:
+    Type: String
+    Default: syntinel-database-import
+    Description: (Required) The name for the function that imports the syntinel database from an s3 bucket.
 
     # Channel Prefixes
   ChannelPublisherPrefix:
@@ -164,6 +182,12 @@ Parameters:
   UpdateLambdaFunctionsArn:
     Type: String
     Description: (Optional) The ARN for the Lambda function that updates lambda functions from S3. Overrides value from CloudStack.
+  ExportDatabaseLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that exports the database to S3. Overrides value from CloudStack.
+  ImportDatabaseLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that imports the database from S3. Overrides value from CloudStack.
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -191,6 +215,7 @@ Metadata:
     - Label:
         default: "API Gateway Configurations"
       Parameters:
+      - RestApiName
       - ApiGatewayStageName
       - DeployToStage
     - Label:
@@ -208,6 +233,8 @@ Metadata:
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
       - UpdateLambdaFunctionsName
+      - ExportDatabaseFunctionName
+      - ImportDatabaseFunctionName
       - ChannelPublisherPrefix
       - ChannelSubscriberPrefix
     - Label:
@@ -222,6 +249,8 @@ Metadata:
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
       - LocalLambdaRoleUpdateLambdaFunctions
+      - LocalLambdaRoleExportDatabase
+      - LocalLambdaRoleImportDatabase
     - Label:
         default: "ADVANCED : Lambda ARN Overrides for API Gateway.  These variables override the functions created in the Lambda template.  They should be left blank in most cases."
       Parameters:
@@ -231,6 +260,8 @@ Metadata:
         - TeamsSubscriberLambdaArn
         - SlackSubscriberLambdaArn
         - UpdateLambdaFunctionsArn
+        - ExportDatabaseLambdaArn
+        - ImportDatabaseLambdaArn
 
 Conditions:
   S3PrefixProvided : !Not [ !Equals [!Ref S3BucketPrefix, ""] ]
@@ -242,6 +273,8 @@ Resources:
     Type:  AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ "", [ "https://", !Ref S3BucketName, ".s3.amazonaws.com/", !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref InitTemplate ] ]
+      Parameters:
+        RestApiName: !Ref RestApiName
 
   ### Create IAM Policies and Roles
   IamStack:
@@ -281,12 +314,16 @@ Resources:
         LocalLambdaRoleSlackPublisher: !Ref LocalLambdaRoleSlackPublisher
         LocalLambdaRoleSlackSubscriber: !Ref LocalLambdaRoleSlackSubscriber
         LocalLambdaRoleUpdateLambdaFunctions: !Ref LocalLambdaRoleUpdateLambdaFunctions
+        LocalLambdaRoleExportDatabase: !Ref LocalLambdaRoleExportDatabase
+        LocalLambdaRoleImportDatabase: !Ref LocalLambdaRoleImportDatabase
         SyntinelCodeBucketName: !Ref S3BucketName
         SyntinelCodeBucketKey: !Join [ "", [ !If [ S3PrefixProvided, !Join [ "", [!Ref S3BucketPrefix, "/"]], ""], !Ref S3BucketLambdaCodeKey ] ]
         ProcessSignalFunctionName: !Ref ProcessSignalFunctionName
         ProcessCueFunctionName: !Ref ProcessCueFunctionName
         ProcessStatusFunctionName: !Ref ProcessStatusFunctionName
         UpdateLambdaFunctionsName: !Ref UpdateLambdaFunctionsName
+        ExportDatabaseFunctionName: !Ref ExportDatabaseFunctionName
+        ImportDatabaseFunctionName: !Ref ImportDatabaseFunctionName
         ReportersTableName: !Ref ReportersTableName
         SignalsTableName: !Ref SignalsTableName
         ChannelsTableName: !Ref ChannelsTableName
@@ -309,13 +346,15 @@ Resources:
         TeamsSubscriberLambdaArn: !Ref TeamsSubscriberLambdaArn
         SlackSubscriberLambdaArn: !Ref SlackSubscriberLambdaArn
         UpdateLambdaFunctionsArn: !Ref UpdateLambdaFunctionsArn
+        ExportDatabaseLambdaArn: !Ref ExportDatabaseLambdaArn
+        ImportDatabaseLambdaArn: !Ref ImportDatabaseLambdaArn
         ApiGatewayStageName: !Ref ApiGatewayStageName
         DeployToStage: !Ref DeployToStage
 
 Outputs:
   Version:
     Description: Cloud Formation Template Version
-    Value: 0.1.20346.0
+    Value: 0.1.21110.0
 
   StackName:
     Description: The name of this stack.

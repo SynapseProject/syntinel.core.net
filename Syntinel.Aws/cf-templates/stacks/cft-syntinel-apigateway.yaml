@@ -38,6 +38,14 @@ Parameters:
     Type: String
     Description: (Optional) The ARN for the Lambda function that updates lambda functions from s3 bucket zipfile. Overrides value from CloudStack.
 
+  ExportDatabaseLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that exports the database to an s3 bucket. Overrides value from CloudStack.
+
+  ImportDatabaseLambdaArn:
+    Type: String
+    Description: (Optional) The ARN for the Lambda function that imports the database from an s3 bucket. Overrides value from CloudStack.
+
   ##### API Gateway Variables #####
   ApiGatewayStageName:
     Type: String
@@ -73,6 +81,8 @@ Metadata:
       - TeamsSubscriberLambdaArn
       - SlackSubscriberLambdaArn
       - UpdateLambdaFunctionsArn
+      - ExportDatabaseLambdaArn
+      - ImportDatabaseLambdaArn
 
 Conditions:
   SignalLambdaArnProvided : !Not [ !Equals [!Ref SignalLambdaProcessorArn, ""] ]
@@ -81,6 +91,8 @@ Conditions:
   TeamsSubscriberLambdaArnProvided : !Not [ !Equals [!Ref TeamsSubscriberLambdaArn, ""] ]
   SlackSubscriberLambdaArnProvided : !Not [ !Equals [!Ref SlackSubscriberLambdaArn, ""] ]
   UpdateLambdaFunctionsArnProvided: !Not [ !Equals [!Ref UpdateLambdaFunctionsArn, ""] ]
+  ExportDatabaseLambdaArnProvided: !Not [ !Equals [!Ref ExportDatabaseLambdaArn, ""] ]
+  ImportDatabaseLambdaArnProvided: !Not [ !Equals [!Ref ImportDatabaseLambdaArn, ""] ]
   DeployApi: !Equals [true, !Ref DeployToStage]
 
 Resources:
@@ -252,6 +264,27 @@ Resources:
       RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
       ParentId: !Ref ConfigResource
       PathPart: lambda
+
+  DatabaseResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref AdminResource
+      PathPart: database
+
+  DatabaseExportResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref DatabaseResource
+      PathPart: export
+
+  DatabaseImportResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ParentId: !Ref DatabaseResource
+      PathPart: import
 
   CueResource:
     Type: AWS::ApiGateway::Resource
@@ -542,6 +575,42 @@ Resources:
         ResponseModels:
           application/json: Empty
 
+  ExportDatabaseMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref DatabaseExportResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ ExportDatabaseLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ExportDatabaseLambdaArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelExportDatabaseFunctionUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
+  ImportDatabaseMethod:
+    Type:  AWS::ApiGateway::Method
+    Properties:
+      RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
+      ResourceId: !Ref DatabaseImportResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri: !If [ ImportDatabaseLambdaArnProvided, !Sub "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ImportDatabaseLambdaArn}/invocations", { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelImportDatabaseFunctionUrl" } } ]
+        IntegrationResponses:
+        - StatusCode: 200
+      MethodResponses:
+      - StatusCode: 200
+        ResponseModels:
+          application/json: Empty
+
 
   # Grant ApiGateway Permission To Call The Lambda Functions
   SyntinelProcessSignalPermissions:
@@ -592,6 +661,22 @@ Resources:
       Principal: apigateway.amazonaws.com
       SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
 
+  ExportDatabasePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ ExportDatabaseLambdaArnProvided, !Ref ExportDatabaseLambdaArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelExportDatabaseFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
+
+  ImportDatabasePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !If [ ImportDatabaseLambdaArnProvided, !Ref ImportDatabaseLambdaArn, { "Fn::ImportValue" : { "Fn::Sub" : "${LambdaCloudStackName}-SyntinelImportDatabaseFunctionArn" } } ]
+      Action: "lambda:InvokeFunction"
+      Principal: apigateway.amazonaws.com
+      SourceArn: { "Fn::Join": [ "", [ "arn:aws:execute-api:", { "Ref": "AWS::Region" }, ":", { "Ref": "AWS::AccountId" }, ":", { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }, "/*/*/*" ] ] }            
+
   # Deploy To Stage
   # *********************************************************************
   # ***** Don't Forget To Update DependsOn When Adding More Methods *****
@@ -608,6 +693,8 @@ Resources:
     - SlackHelloWorldMethod
     - SlackCueMethod
     - AdminUpdateLambdas
+    - ExportDatabaseMethod
+    - ImportDatabaseMethod
     Properties:
       RestApiId: { "Fn::ImportValue" : { "Fn::Sub" : "${InitCloudStackName}-SyntinelApiGateway" } }
       StageName: !Ref ApiGatewayStageName
@@ -615,7 +702,7 @@ Resources:
 Outputs:
   Version:
     Description: Cloud Formation Template Version
-    Value: 0.1.20346.0
+    Value: 0.1.21110.0
 
   StackName:
     Description: The name of this stack.

@@ -12,19 +12,19 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "_id")]
         public string Id { get; set; }
 
-        [JsonProperty(PropertyName = "name")]
+        [JsonProperty(PropertyName = "name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
 
-        [JsonProperty(PropertyName = "description")]
+        [JsonProperty(PropertyName = "description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        [JsonProperty(PropertyName = "defaultChannels")]
+        [JsonProperty(PropertyName = "defaultChannels", NullValueHandling = NullValueHandling.Ignore)]
         public string[] DefaultChannels { get; set; } = { "_default" };
 
         [JsonIgnore]
         public Dictionary<string, ChannelDbRecord> Channels { get; set; } = new Dictionary<string, ChannelDbRecord>();
 
-        [JsonProperty(PropertyName = "isActive")]
+        [JsonProperty(PropertyName = "isActive", NullValueHandling = NullValueHandling.Ignore)]
         public bool IsActive { get; set; } = true;
 
 

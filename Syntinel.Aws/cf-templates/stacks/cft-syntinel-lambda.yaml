@@ -33,6 +33,12 @@ Parameters:
   LocalLambdaRoleUpdateLambdaFunctions:
     Type: String
     Description: (Optional) The name of the role to be used only with the lambda auto-updater function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleExportDatabase:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda export database function.  This overrides any Global roles or roles from the CloudFormation stack.
+  LocalLambdaRoleImportDatabase:
+    Type: String
+    Description: (Optional) The name of the role to be used only with the lambda import database function.  This overrides any Global roles or roles from the CloudFormation stack.
 
   ##### Lambda Function DotNet Core Code Locations
   SyntinelCodeBucketName:
@@ -61,6 +67,14 @@ Parameters:
     Type: String
     Default: syntinel-lambda-update
     Description: (Required) The name for the function that updates lambda functions from the s3 bucket.
+  ExportDatabaseFunctionName:
+    Type: String
+    Default: syntinel-database-export
+    Description: (Required) The name for the function that exports the syntinel database to an s3 bucket.
+  ImportDatabaseFunctionName:
+    Type: String
+    Default: syntinel-database-import
+    Description: (Required) The name for the function that imports the syntinel database from an s3 bucket.
   
   ##### Dynamo Database Table Names
   ReportersTableName:
@@ -115,6 +129,8 @@ Metadata:
       - LocalLambdaRoleSlackPublisher
       - LocalLambdaRoleSlackSubscriber
       - LocalLambdaRoleUpdateLambdaFunctions
+      - LocalLambdaRoleExportDatabase
+      - LocalLambdaRoleImportDatabase
     - Label:
         default: "Core Lambda Function Names (Required)"
       Parameters:
@@ -122,6 +138,8 @@ Metadata:
       - ProcessCueFunctionName
       - ProcessStatusFunctionName
       - UpdateLambdaFunctionsName
+      - ExportDatabaseFunctionName
+      - ImportDatabaseFunctionName
     - Label:
         default: "Channel Specific Lambda Function Prefixes (Required)"
       Parameters:
@@ -146,6 +164,8 @@ Conditions:
     LocalIamRoleSlackPublisherProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackPublisher, ""] ]
     LocalIamRoleSlackSubscriberProvided : !Not [ !Equals [!Ref LocalLambdaRoleSlackSubscriber, ""] ]
     LocalLambdaRoleUpdateLambdaFunctionsProvided : !Not [ !Equals [!Ref LocalLambdaRoleUpdateLambdaFunctions, ""] ]
+    LocalLambdaRoleExportDatabaseProvided : !Not [ !Equals [!Ref LocalLambdaRoleExportDatabase, ""] ]
+    LocalLambdaRoleImportDatabaseProvided : !Not [ !Equals [!Ref LocalLambdaRoleImportDatabase, ""] ]
     
 Resources: 
   ##### Core Functions
@@ -402,13 +422,58 @@ Resources:
               - !Ref SyntinelCueSubscriberTeams
               - !Ref SyntinelSignalPublisherSlack
               - !Ref SyntinelCueSubscriberSlack
+              - !Ref SyntinelExportDatabaseFunction
+              - !Ref SyntinelImportDatabaseFunction
           s3Bucket: !Ref SyntinelCodeBucketName
           s3Key: !Ref SyntinelCodeBucketKey
+
+  SyntinelExportDatabaseFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ExportDatabaseFunctionName
+      Description: Exports Syntinel Database to an S3 Bucket.
+      Role: !If [ LocalLambdaRoleExportDatabaseProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleExportDatabase}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ExportDatabase
+      Runtime: dotnetcore3.1
+      Timeout: 300
+      Environment:
+        Variables:
+          DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
+
+  SyntinelImportDatabaseFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref ImportDatabaseFunctionName
+      Description: Imports Syntinel Database from an S3 Bucket.
+      Role: !If [ LocalLambdaRoleImportDatabaseProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${LocalLambdaRoleImportDatabase}", !If [ GlobalIamRoleProvided, !Sub "arn:aws:iam::${AWS::AccountId}:role/${GlobalCoreRole}", { "Fn::ImportValue" : { "Fn::Sub" : "${IamCloudStackName}-SyntinelCoreRoleArn" } } ] ]
+      Code:
+        S3Bucket: !Ref SyntinelCodeBucketName
+        S3Key: !Ref SyntinelCodeBucketKey
+      Handler: Syntinel.Aws::Syntinel.Aws.LambdaFunctions::ImportDatabase
+      Runtime: dotnetcore3.1
+      Timeout: 300
+      Environment:
+        Variables:
+          DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
+
 
 Outputs:
   Version:
     Description: Cloud Formation Template Version
-    Value: 0.1.20346.0
+    Value: 0.1.21106.0
 
   StackName:
     Description: The name of this stack.
@@ -581,7 +646,7 @@ Outputs:
     Value: !Ref SyntinelLambdaUpdateFunction
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelLambdaUpdateFunctionName"
-  LambdaUpdateFunctionnArn:
+  LambdaUpdateFunctionArn:
     Description: The ARN of the lambda function to update lambda functions from the s3 bucket zipfile.
     Value: !GetAtt
         - SyntinelLambdaUpdateFunction
@@ -597,4 +662,50 @@ Outputs:
         - Arn
     Export:
       Name: !Sub "${AWS::StackName}-SyntinelLambdaUpdateFunctionUrl"
+  
+  # Admin - Export Database
+  LambdaExportDatabaseName:
+    Description: The name of the lambda function to export the syntinel database to an s3 bucket.
+    Value: !Ref SyntinelExportDatabaseFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelExportDatabaseFunctionName"
+  LambdaExportDatabaseArn:
+    Description: The ARN of the lambda function to export the syntinel database to an s3 bucket.
+    Value: !GetAtt
+        - SyntinelExportDatabaseFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelExportDatabaseFunctionArn"
+  LambdaExportDatabaseUrl:
+    Description: The URL of the lambda function to export the syntinel database to an s3 bucket. (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelExportDatabaseFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelExportDatabaseFunctionUrl"
+  
+  # Admin - Import Database
+  LambdaImportDatabaseName:
+    Description: The name of the lambda function to import the syntinel database from an s3 bucket.
+    Value: !Ref SyntinelImportDatabaseFunction
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelImportDatabaseFunctionName"
+  LambdaImportDatabaseArn:
+    Description: The ARN of the lambda function to import the syntinel database from an s3 bucket.
+    Value: !GetAtt
+        - SyntinelImportDatabaseFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelImportDatabaseFunctionArn"
+  LambdaImportDatabaseUrl:
+    Description: The URL of the lambda function to import the syntinel database from an s3 bucket (for use within the API Gateway).
+    Value: !Sub
+      - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+      - LambdaArn : !GetAtt
+        - SyntinelImportDatabaseFunction
+        - Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-SyntinelImportDatabaseFunctionUrl"
   

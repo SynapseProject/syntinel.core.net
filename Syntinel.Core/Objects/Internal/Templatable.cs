@@ -15,6 +15,7 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "arguments", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, object> Arguments { get; set; }
 
+        [JsonIgnore]
         public bool HasTemplate {
             get {
                 return !String.IsNullOrEmpty(TemplateId);
