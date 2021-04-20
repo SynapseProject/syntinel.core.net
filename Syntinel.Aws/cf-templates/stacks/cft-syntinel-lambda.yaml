@@ -442,6 +442,11 @@ Resources:
       Environment:
         Variables:
           DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
 
   SyntinelImportDatabaseFunction:
     Type: AWS::Lambda::Function
@@ -458,6 +463,11 @@ Resources:
       Environment:
         Variables:
           DefaultExportImportFile: !Sub "s3://${SyntinelCodeBucketName}/export/database.json"
+          Syntinel_SignalsTableName: !Ref SignalsTableName
+          Syntinel_ReportersTableName: !Ref ReportersTableName
+          Syntinel_ChannelsTableName: !Ref ChannelsTableName
+          Syntinel_RouterTableName: !Ref RouterTableName
+          Syntinel_TemplatesTableName: !Ref TemplatesTableName
 
 
 Outputs:
