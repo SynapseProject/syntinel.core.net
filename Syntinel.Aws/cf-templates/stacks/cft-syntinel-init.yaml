@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates the initial RestApi for running the Syntinel application.
 
 Parameters:
-  ### S3 Locations
+  ### Rest API
   RestApiName:
     Type: String
     Default: syntinel
