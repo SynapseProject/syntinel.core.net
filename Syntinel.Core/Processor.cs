@@ -149,6 +149,10 @@ namespace Syntinel.Core
                     AzureBotServiceMessage message = abs.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
+                else if (channel.Type == "auto-reply")
+                {
+
+                }
                 else
                     throw new Exception($"Unknown Channel Type [{channel.Type}].");
             } 

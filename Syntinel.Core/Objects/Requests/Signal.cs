@@ -56,8 +56,11 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "actions")]
         public List<SignalVariable> Actions { get; set; } = new List<SignalVariable>();
 
-        [JsonProperty(PropertyName = "defaultAction")]
-        public string DefaultAction { get; set; }
+        [JsonProperty(PropertyName = "defaultId")]
+        public string DefaultId { get; set; }
+
+        [JsonProperty(PropertyName = "defaultValue")]
+        public string DefaultValue { get; set; }
     }
 
     public class Resolver

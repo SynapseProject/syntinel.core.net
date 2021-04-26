@@ -27,8 +27,8 @@
       ],
       "actions": [
         {
-          "name": "Perform Action",
           "id": "action",
+          "text": "Perform Action",
           "description": "Choose action to take against EC2 instances.",
           "type": "choice",
           "values": {
@@ -40,22 +40,25 @@
           "defaultValue": "stop"
         },
         {
+          "id":  "action",
           "name": "Ignore Alert",
           "description": "Ignore this alert.",
           "type": "button",
           "defaultValue": "ignore"
         },
         {
+          "id": "action",
           "name": "Disable Alert",
           "description": "Disable this alert.",
           "type": "button",
           "defaultValue": "disable"
         }
       ],
-      "defaultAction": "Perform Action"
+      "defaultId": "action",
+      "defaultValue":  "ignore"
     }
   },
-  "defaultCue": "ec2-template",
+  "defaultCue": "ec2",
   "defaultCueTimeout": 4320,
   "includeId": true
 }
