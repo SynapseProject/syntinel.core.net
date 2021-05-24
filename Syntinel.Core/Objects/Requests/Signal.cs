@@ -37,6 +37,25 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "includeId")]
         public bool IncludeId { get; set; } = true;
+
+        [JsonIgnore]
+        public bool IsActionable { get
+            {
+                bool actionable = false;
+                if (Cues != null)
+                {
+                    foreach (string key in Cues.Keys)
+                    {
+                        if (Cues[key].Actions.Count > 0)
+                        {
+                            actionable = true;
+                            break;
+                        }
+                    }
+                }
+                return actionable;
+            }
+        }
     }
 
     public class CueOption : Templatable<CueOption>

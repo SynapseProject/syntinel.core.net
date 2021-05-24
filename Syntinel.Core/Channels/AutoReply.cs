@@ -5,7 +5,7 @@ namespace Syntinel.Core
 {
     public class AutoReply
     {
-        public static void Publish(string id, ChannelDbRecord channel, Signal signal)
+        public static Cue CreateCue(string id, ChannelDbRecord channel, Signal signal)
         {
             ChannelRequest request = new ChannelRequest
             {
@@ -14,14 +14,18 @@ namespace Syntinel.Core
                 Signal = signal
             };
 
-            Publish(request);
+            return CreateCue(request);
         }
 
-        public static void Publish(ChannelRequest request)
+        public static Cue CreateCue(ChannelRequest request)
         {
             string defaultCue = request.Signal.DefaultCue;
+            if (string.IsNullOrWhiteSpace(defaultCue))
+                throw new Exception("DefaultCue not specified in Signal.");
             CueOption defaultCueOption = request.Signal.Cues[defaultCue];
             string id = defaultCueOption.DefaultId;
+            if (string.IsNullOrWhiteSpace(id))
+                throw new Exception("DefaultId not specified in Signal.");
             List<string> values = new List<string>();
             values.Add(defaultCueOption.DefaultValue);
 
@@ -34,6 +38,7 @@ namespace Syntinel.Core
             var.Values = values;
             cue.Variables.Add(var);
 
+            return cue;
 
         }
 
