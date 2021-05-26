@@ -3,8 +3,6 @@
   "description": "EC2 Utilization Montior",
   "maxReplies": 1,
   "reporterId": "_default",
-  "routerId": "MyId",
-  "routerType": "MyIdType",
   "cues": {
     "ec2": {
       "name": "EC2 Usage",
@@ -16,19 +14,10 @@
           "instances": [ "i-888888888888" ]
         }
       },
-      "inputs": [
-        {
-          "name": "Enter Comment",
-          "id": "comment",
-          "description": "Choose action to take against EC2 instances.",
-          "type": "text",
-          "defaultValue": "Default Comment Value Here"
-        }
-      ],
       "actions": [
         {
-          "id": "action",
           "text": "Perform Action",
+          "id": "ec2-action",
           "description": "Choose action to take against EC2 instances.",
           "type": "choice",
           "values": {
@@ -40,25 +29,24 @@
           "defaultValue": "stop"
         },
         {
-          "id":  "action",
-          "name": "Ignore Alert",
+          "text": "Ignore Alert",
+          "id": "syntinel-action",
           "description": "Ignore this alert.",
           "type": "button",
           "defaultValue": "ignore"
         },
         {
-          "id": "action",
-          "name": "Disable Alert",
+          "text": "Disable Alert",
+          "id": "syntinel-action",
           "description": "Disable this alert.",
           "type": "button",
           "defaultValue": "disable"
         }
       ],
-      "defaultId": "action",
-      "defaultValue":  "ignore"
+      "defaultId": "ec2-action",
+      "defaultValue": "stop"
     }
   },
   "defaultCue": "ec2",
-  "defaultCueTimeout": 4320,
   "includeId": true
 }

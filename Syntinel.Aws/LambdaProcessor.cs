@@ -23,7 +23,6 @@ namespace Syntinel.Aws
 
         public override SignalStatus SendToChannel(ChannelDbRecord channel, SignalDbRecord signal)
         {
-            // TODO: Hope This Works To Keep Action In Base Processor
             if (channel.Type == "auto-reply")
                 return base.SendToChannel(channel, signal);
 
