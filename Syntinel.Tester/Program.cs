@@ -46,7 +46,7 @@ namespace Syntinel.Tester
 
             /*** Send Signal Message ***/
             int signalCount = 1;
-            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-UsingTemplate.json", FileMode.Open));
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-Simple.json", FileMode.Open));
             string fileStr = reader.ReadToEnd();
             Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
             Parallel.For(0, signalCount, index =>

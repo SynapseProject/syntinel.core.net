@@ -21,13 +21,35 @@ namespace Syntinel.Core
         {
             string defaultCue = request.Signal.DefaultCue;
             if (string.IsNullOrWhiteSpace(defaultCue))
-                throw new Exception("DefaultCue not specified in Signal.");
+            {
+                // If only one Cue is present in the signal message, use that as the default.
+                if (request.Signal.Cues.Count == 1)
+                {
+                    foreach (string key in request.Signal.Cues.Keys)
+                    {
+                        defaultCue = key;
+                        break;
+                    }
+                } else
+                    throw new Exception("DefaultCue could not be determined.");
+            }
             CueOption defaultCueOption = request.Signal.Cues[defaultCue];
             string id = defaultCueOption.DefaultId;
+            string value = defaultCueOption.DefaultValue;
             if (string.IsNullOrWhiteSpace(id))
-                throw new Exception("DefaultId not specified in Signal.");
+            {
+                // Get Default Id (and value) from action if only one exists
+                if (defaultCueOption.Actions != null && defaultCueOption.Actions.Count == 1)
+                {
+                    id = defaultCueOption.Actions[0].Id;
+                    if (string.IsNullOrWhiteSpace(value))
+                        value = defaultCueOption.Actions[0].DefaultValue;
+
+                } else
+                    throw new Exception("DefaultId could not be determined.");
+            }
             List<string> values = new List<string>();
-            values.Add(defaultCueOption.DefaultValue);
+            values.Add(value);
 
             Cue cue = new Cue();
             cue.Id = request.Id;

@@ -46,7 +46,14 @@ namespace Syntinel.Core
                 {
                     foreach (string key in Cues.Keys)
                     {
+                        // Has at least one action defined
                         if (Cues[key].Actions.Count > 0)
+                        {
+                            actionable = true;
+                            break;
+                        }
+                        // Could be actionable with a "auto-reply" subscriber
+                        else if (!string.IsNullOrWhiteSpace(Cues[key].DefaultId))
                         {
                             actionable = true;
                             break;

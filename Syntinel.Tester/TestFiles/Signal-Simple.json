@@ -1,0 +1,22 @@
+﻿{
+  "name": "Utilization",
+  "description": "EC2 Utilization Montior",
+  "maxReplies": 1,
+  "reporterId": "_default",
+  "cues": {
+    "ec2": {
+      "name": "EC2 Usage",
+      "description": "Stopping Server [i-888888888888].  It has been running for 7 days.",
+      "resolver": {
+        "name": "Echo",
+        "notify": true,
+        "config": {
+          "instances": [ "i-888888888888" ]
+        }
+      },
+      "defaultId": "ec2-action",
+      "defaultValue": "stop"
+    }
+  },
+  "includeId": true
+}
