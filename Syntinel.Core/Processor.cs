@@ -129,23 +129,23 @@ namespace Syntinel.Core
                     status.Code = StatusCode.NotActive;
                     status.Message = "Channel Is Disabled.";
                 }
-                else if (channel.Type == "slack")
+                else if (channel.Type == ChannelType.Slack)
                 {
                     SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
-                else if (channel.Type == "teams")
+                else if (channel.Type == ChannelType.Teams)
                 {
                     MessageCard message = Teams.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
-                else if (channel.Type == "azure-bot-service")
+                else if (channel.Type == ChannelType.AzureBotService)
                 {
                     AzureBotService abs = new AzureBotService();
                     AzureBotServiceMessage message = abs.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
-                else if (channel.Type == "auto-reply")
+                else if (channel.Type == ChannelType.AutoReply)
                 {
                     if (signal.Signal.IsActionable) { 
                         Cue cue = AutoReply.CreateCue(signal.Id, channel, signal.Signal);
