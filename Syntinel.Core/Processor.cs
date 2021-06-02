@@ -21,7 +21,6 @@ namespace Syntinel.Core
 
         public SignalReply ProcessSignal(Signal request)
         {
-            bool isActionable = false;
             SignalReply reply = new SignalReply();
             reply.StatusCode = StatusCode.Success;
             reply.Time = DateTime.UtcNow;
@@ -57,9 +56,6 @@ namespace Syntinel.Core
                 {
                     if (signal.Cues[key].HasTemplate)
                         signal.Cues[key] = signal.Cues[key].GetTemplate(DbEngine);
-
-                    if (signal.Cues[key].Actions.Count > 0)
-                        isActionable = true;
                 }
             }
 
@@ -107,7 +103,7 @@ namespace Syntinel.Core
                     reply.StatusCode = StatusCode.SuccessWithErrors;
             }
 
-            if (isActionable)
+            if (signal.IsActionable)
                 signalDb.Status = StatusType.Sent;
             else
                 signalDb.Status = StatusType.Completed;
@@ -133,21 +129,29 @@ namespace Syntinel.Core
                     status.Code = StatusCode.NotActive;
                     status.Message = "Channel Is Disabled.";
                 }
-                else if (channel.Type == "slack")
+                else if (channel.Type == ChannelType.Slack)
                 {
                     SlackMessage message = Slack.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
-                else if (channel.Type == "teams")
+                else if (channel.Type == ChannelType.Teams)
                 {
                     MessageCard message = Teams.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
                 }
-                else if (channel.Type == "azure-bot-service")
+                else if (channel.Type == ChannelType.AzureBotService)
                 {
                     AzureBotService abs = new AzureBotService();
                     AzureBotServiceMessage message = abs.Publish(signal.Id, channel, signal.Signal);
                     //status.Message = JsonTools.Serialize(message);
+                }
+                else if (channel.Type == ChannelType.AutoReply)
+                {
+                    if (signal.Signal.IsActionable) { 
+                        Cue cue = AutoReply.CreateCue(signal.Id, channel, signal.Signal);
+                        CueReply reply = ReceiveCue(cue);
+                        status.Message = reply.ActionId;
+                    }
                 }
                 else
                     throw new Exception($"Unknown Channel Type [{channel.Type}].");

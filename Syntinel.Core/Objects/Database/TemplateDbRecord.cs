@@ -56,8 +56,9 @@ namespace Syntinel.Core
 
         public void SetParameters(Dictionary<string,object> values)
         {
-            foreach (string key in values.Keys)
-                SetParameter(key, values[key]);
+            if (values != null)
+                foreach (string key in values.Keys)
+                    SetParameter(key, values[key]);
         }
     }
 

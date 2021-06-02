@@ -23,7 +23,7 @@ namespace Syntinel.Tester
     {
         public static void Main(string[] args)
         {
-            /*** Export Database Records ***/
+            /*** Common Variables ***/
             DynamoDbEngine db = new DynamoDbEngine();
             Processor processor = new Processor(db);
             processor.Logger = new ConsoleLogger();
@@ -36,29 +36,26 @@ namespace Syntinel.Tester
             //file.WriteAllText(JsonTools.Serialize(export, true));
 
             /*** Import From S3 Bucket ***/
-            AwsClient client = new AwsClient();
-            ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
-            file.Open(AccessType.Read);
-            string importText = file.ReadAllText();
-            List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
-            processor.ImportData(records, false);
-
-
-            Console.WriteLine("Completed");
+            //AwsClient client = new AwsClient();
+            //ZephyrFile file = new AwsS3ZephyrFile(client, "s3://guywaguespack/export.json");
+            //file.Open(AccessType.Read);
+            //string importText = file.ReadAllText();
+            //List<ExportRecord> records = JsonTools.Deserialize<List<ExportRecord>>(importText);
+            //processor.ImportData(records, false);
 
 
             /*** Send Signal Message ***/
-            //int signalCount = 1;
-            //TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-UsingTemplate.json", FileMode.Open));
-            //string fileStr = reader.ReadToEnd();
-            //Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
-            //Parallel.For(0, signalCount, index =>
-            //{
-            //    SignalReply reply = processor.ProcessSignal(signal);
-            //    Console.WriteLine($"Status : {reply.StatusCode}");
-            //    foreach (SignalStatus status in reply.Results)
-            //        Console.WriteLine($"     {status.ChannelId} : {status.Code} - {status.Message}");
-            //});
+            int signalCount = 1;
+            TextReader reader = new StreamReader(new FileStream(@"/Users/guy/Documents/Source/syntinel.core.net/Syntinel.Tester/TestFiles/Signal-Simple.json", FileMode.Open));
+            string fileStr = reader.ReadToEnd();
+            Signal signal = JsonConvert.DeserializeObject<Signal>(fileStr);
+            Parallel.For(0, signalCount, index =>
+            {
+                SignalReply reply = processor.ProcessSignal(signal);
+                Console.WriteLine($"Status : {reply.StatusCode}");
+                foreach (SignalStatus status in reply.Results)
+                    Console.WriteLine($"     {status.ChannelId} : {status.Code} - {status.Message}");
+            });
 
 
             /*** Send Teams Cue Response ***/

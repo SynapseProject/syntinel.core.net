@@ -37,6 +37,32 @@ namespace Syntinel.Core
 
         [JsonProperty(PropertyName = "includeId")]
         public bool IncludeId { get; set; } = true;
+
+        [JsonIgnore]
+        public bool IsActionable { get
+            {
+                bool actionable = false;
+                if (Cues != null)
+                {
+                    foreach (string key in Cues.Keys)
+                    {
+                        // Has at least one action defined
+                        if (Cues[key].Actions.Count > 0)
+                        {
+                            actionable = true;
+                            break;
+                        }
+                        // Could be actionable with a "auto-reply" subscriber
+                        else if (!string.IsNullOrWhiteSpace(Cues[key].DefaultId))
+                        {
+                            actionable = true;
+                            break;
+                        }
+                    }
+                }
+                return actionable;
+            }
+        }
     }
 
     public class CueOption : Templatable<CueOption>
@@ -56,8 +82,11 @@ namespace Syntinel.Core
         [JsonProperty(PropertyName = "actions")]
         public List<SignalVariable> Actions { get; set; } = new List<SignalVariable>();
 
-        [JsonProperty(PropertyName = "defaultAction")]
-        public string DefaultAction { get; set; }
+        [JsonProperty(PropertyName = "defaultId")]
+        public string DefaultId { get; set; }
+
+        [JsonProperty(PropertyName = "defaultValue")]
+        public string DefaultValue { get; set; }
     }
 
     public class Resolver

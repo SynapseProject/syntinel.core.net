@@ -23,6 +23,9 @@ namespace Syntinel.Aws
 
         public override SignalStatus SendToChannel(ChannelDbRecord channel, SignalDbRecord signal)
         {
+            if (channel.Type == "auto-reply")
+                return base.SendToChannel(channel, signal);
+
             SignalStatus status = new SignalStatus
             {
                 ChannelType = channel.Type,
