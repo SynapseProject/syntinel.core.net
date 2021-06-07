@@ -153,6 +153,12 @@ namespace Syntinel.Core
                         status.Message = reply.ActionId;
                     }
                 }
+                else if (channel.Type == ChannelType.Smtp)
+                {
+                    // TODO: Strongly Type Me
+                    Smtp.Publish(signal.Id, channel, signal.Signal);
+                    //status.Message = JsonTools.Serialize(message);
+                }
                 else
                     throw new Exception($"Unknown Channel Type [{channel.Type}].");
             } 

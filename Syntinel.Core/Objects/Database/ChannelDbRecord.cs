@@ -37,5 +37,6 @@ namespace Syntinel.Core
         public static string Teams              { get { return "teams"; } }
         public static string AzureBotService    { get { return "azure-bot-service"; } }
         public static string AutoReply          { get { return "auto-reply"; } }
+        public static string Smtp               { get { return "smtp"; } }
     }
 }
